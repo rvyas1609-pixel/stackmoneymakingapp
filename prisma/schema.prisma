@@ -1,0 +1,361 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User with authentication
+model User {
+  id            String    @id @default(cuid())
+  clerkId       String    @unique
+  email         String    @unique
+  username      String?
+  profileImage  String?
+  displayName   String?
+  
+  // Onboarding
+  primarySkill  String?
+  weeklyHours   Int?
+  incomeGoal    Int?
+  
+  // Subscription
+  subscription  Subscription?
+  subscriptionId String?
+  
+  // Preferences
+  preferences   UserPreferences?
+  
+  // Content
+  savedPrompts  SavedPrompt[]
+  savedResources SavedResource[]
+  completedModules CompletedModule[]
+  
+  // Community
+  communityProfile CommunityProfile?
+  messages      Message[]
+  achievements  Achievement[]
+  xp            Int @default(0)
+  
+  // Bookmarks & favorites
+  favoriteHustles String[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model UserPreferences {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  emailNotifications Boolean @default(true)
+  pushNotifications Boolean @default(true)
+  weeklyDigest Boolean @default(true)
+  communityEmails Boolean @default(true)
+  
+  theme         String    @default("dark")
+  locale        String    @default("en")
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Subscription Management
+model Subscription {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  stripeId      String?   @unique
+  priceId       String?
+  tier          String    @default("free") // free, starter, pro, elite
+  
+  status        String    @default("active") // active, canceled, past_due, unpaid
+  currentPeriodStart DateTime?
+  currentPeriodEnd DateTime?
+  canceledAt    DateTime?
+  
+  customerId    String?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Content: Playbooks
+model Playbook {
+  id            String    @id @default(cuid())
+  title         String
+  description   String    @db.Text
+  slug          String    @unique
+  
+  icon          String?
+  category      String
+  difficulty    String    @default("Beginner") // Beginner, Intermediate, Advanced
+  
+  range         String?   // "$500-1000/mo"
+  timeCommitment String?  // "5 hrs/week"
+  
+  content       String    @db.Text
+  steps         Step[]
+  tools         String[]
+  
+  order         Int       @default(0)
+  published     Boolean   @default(false)
+  tier          String    @default("starter") // starter, pro, elite
+  
+  views         Int       @default(0)
+  saved         Int       @default(0)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Step {
+  id            String    @id @default(cuid())
+  playbookId    String
+  playbook      Playbook  @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+  
+  number        Int
+  heading       String
+  body          String    @db.Text
+  
+  order         Int
+  createdAt     DateTime  @default(now())
+}
+
+// Content: Prompts
+model PromptPack {
+  id            String    @id @default(cuid())
+  title         String
+  description   String    @db.Text
+  
+  prompts       Prompt[]
+  
+  tier          String    @default("starter")
+  month         Int
+  year          Int
+  
+  published     Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Prompt {
+  id            String    @id @default(cuid())
+  packId        String
+  pack          PromptPack @relation(fields: [packId], references: [id], onDelete: Cascade)
+  
+  title         String
+  content       String    @db.Text
+  category      String    // copywriting, video, marketing, automation, etc.
+  
+  tags          String[]
+  useCount      Int       @default(0)
+  rating        Float     @default(0)
+  
+  savedBy       SavedPrompt[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model SavedPrompt {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  promptId      String
+  prompt        Prompt    @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime  @default(now())
+  
+  @@unique([userId, promptId])
+}
+
+// Content: Resources
+model Resource {
+  id            String    @id @default(cuid())
+  title         String
+  description   String    @db.Text
+  category      String    // templates, scripts, frameworks, etc.
+  
+  downloadUrl   String?
+  content       String?   @db.Text
+  
+  type          String    // notion, figma, pdf, etc.
+  tags          String[]
+  
+  tier          String    @default("starter")
+  published     Boolean   @default(false)
+  
+  downloads     Int       @default(0)
+  saved         Int       @default(0)
+  
+  savedBy       SavedResource[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model SavedResource {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  resourceId    String
+  resource      Resource  @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime  @default(now())
+  
+  @@unique([userId, resourceId])
+}
+
+// AI Tools Database
+model AITool {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  slug          String    @unique
+  description   String    @db.Text
+  
+  logo          String?
+  website       String?
+  pricing       String
+  
+  categories    String[]
+  incomeAngle   String?   @db.Text
+  
+  tutorials     String?   @db.Text
+  workflows     String?   @db.Text
+  
+  rating        Float     @default(0)
+  reviews       Int       @default(0)
+  
+  published     Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Learning & Progression
+model Roadmap {
+  id            String    @id @default(cuid())
+  title         String
+  description   String
+  slug          String    @unique
+  
+  duration      Int       // days
+  difficulty    String
+  
+  milestones    Milestone[]
+  
+  published     Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Milestone {
+  id            String    @id @default(cuid())
+  roadmapId     String
+  roadmap       Roadmap   @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  
+  day           Int
+  title         String
+  description   String    @db.Text
+  
+  order         Int
+  createdAt     DateTime  @default(now())
+}
+
+model CompletedModule {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  moduleId      String
+  moduleName    String
+  
+  completedAt   DateTime  @default(now())
+  
+  @@unique([userId, moduleId])
+}
+
+// Community & Gamification
+model CommunityProfile {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  bio           String?
+  website       String?
+  twitter       String?
+  
+  publicProfile Boolean   @default(true)
+  
+  wins          String[]
+  incomeLastMonth Int?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Message {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  channel       String    // wins, accountability, tools, etc.
+  content       String    @db.Text
+  
+  reactions     String[]
+  commentCount  Int       @default(0)
+  
+  isPinned      Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Achievement {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title         String
+  description   String
+  icon          String
+  xpReward      Int
+  
+  unlockedAt    DateTime  @default(now())
+  
+  @@unique([userId, title])
+}
+
+// Analytics
+model Event {
+  id            String    @id @default(cuid())
+  userId        String?
+  eventType     String    // page_view, prompt_used, resource_downloaded, etc.
+  metadata      Json      @db.Json
+  
+  createdAt     DateTime  @default(now())
+}
+
+model AnalyticsDashboard {
+  id            String    @id @default(cuid())
+  
+  totalUsers    Int       @default(0)
+  activeUsers   Int       @default(0)
+  mrr           Int       @default(0)
+  churnRate     Float     @default(0)
+  
+  date          DateTime  @unique
+  createdAt     DateTime  @default(now())
+}

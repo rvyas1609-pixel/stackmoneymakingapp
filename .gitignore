@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Production build
+.next
+out
+build
+dist
+
+# Environment variables (NEVER push these!)
+.env
+.env.local
+.env.*.local
+.env.production.local
+.env.development.local
+.env.test.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Database
+dev.db
+*.db
+
+# Testing
+.coverage
+coverage
+
+# Misc
+.turbo
