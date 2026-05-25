@@ -343,7 +343,7 @@ model Event {
   id            String    @id @default(cuid())
   userId        String?
   eventType     String    // page_view, prompt_used, resource_downloaded, etc.
-  metadata      Json      @db.Json
+  metadata      String    @db.Json
   
   createdAt     DateTime  @default(now())
 }
