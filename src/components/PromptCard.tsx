@@ -14,7 +14,6 @@ interface PromptCardProps {
 }
 
 export function PromptCard({
-  id,
   title,
   content,
   category,

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 // Mock AI chat endpoint
 export async function POST(request: Request) {
   try {
-    const { messages, system } = await request.json();
+    const { messages } = await request.json();
 
     if (!messages || messages.length === 0) {
       return NextResponse.json(

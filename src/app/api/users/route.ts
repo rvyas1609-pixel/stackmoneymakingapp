@@ -26,8 +26,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data)
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
     return NextResponse.json(
-      { error: err.message },
+      { error: message },
       { status: 500 }
     )
   }
@@ -50,8 +51,9 @@ export async function GET() {
 
     return NextResponse.json(data)
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
     return NextResponse.json(
-      { error: err.message },
+      { error: message },
       { status: 500 }
     )
   }
@@ -75,8 +77,9 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true })
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
     return NextResponse.json(
-      { error: err.message },
+      { error: message },
       { status: 500 }
     )
   }

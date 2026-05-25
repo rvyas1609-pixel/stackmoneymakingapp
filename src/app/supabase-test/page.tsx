@@ -5,7 +5,7 @@ import { useState } from 'react'
 export default function SupabaseTestPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState<any[]>([])
 
   // Function to add a new user via our API
   const addUser = async () => {
@@ -31,7 +31,8 @@ export default function SupabaseTestPage() {
         setMessage(`✅ User added! ID: ${data[0].id}`)
       }
     } catch (err) {
-      setMessage(`❌ Failed: ${err.message}`)
+      const message = err instanceof Error ? err.message : String(err)
+      setMessage(`❌ Failed: ${message}`)
     }
 
     setLoading(false)
@@ -58,7 +59,8 @@ export default function SupabaseTestPage() {
         setMessage(`✅ Found ${data.length} users!`)
       }
     } catch (err) {
-      setMessage(`❌ Failed: ${err.message}`)
+      const message = err instanceof Error ? err.message : String(err)
+      setMessage(`❌ Failed: ${message}`)
     }
 
     setLoading(false)
@@ -85,7 +87,8 @@ export default function SupabaseTestPage() {
         setUsers([])
       }
     } catch (err) {
-      setMessage(`❌ Failed: ${err.message}`)
+      const message = err instanceof Error ? err.message : String(err)
+      setMessage(`❌ Failed: ${message}`)
     }
 
     setLoading(false)
