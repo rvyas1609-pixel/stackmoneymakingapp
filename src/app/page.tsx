@@ -1,434 +1,386 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.2, delayChildren: 0.3 },
-  },
-};
+// --- Components ---
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
-};
+const Navbar = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
 
-export default function Home() {
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bg via-bg to-surface">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-bg/80 border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center text-bg font-serif font-bold text-lg">
-              S
-            </div>
-            <span className="font-serif text-xl font-bold text-text-primary italic">
-              STACK
-            </span>
+    <nav className={`fixed top-0 w-full z-[100] transition-all duration-300 ${
+      isScrolled ? 'backdrop-blur-xl bg-bg-primary/80 border-b border-border py-4' : 'bg-transparent py-6'
+    }`}>
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded bg-gradient-premium flex items-center justify-center">
+            <svg className="w-5 h-5 text-bg-primary fill-current" viewBox="0 0 24 24">
+              <path d="M13 10V3L4 14H11V21L20 10H13Z" />
+            </svg>
           </div>
-          <div className="hidden md:flex gap-8">
-            <a href="#features" className="text-text-secondary hover:text-text-primary transition">
-              Features
-            </a>
-            <a href="#pricing" className="text-text-secondary hover:text-text-primary transition">
-              Pricing
-            </a>
-            <a href="#faq" className="text-text-secondary hover:text-text-primary transition">
-              FAQ
-            </a>
-          </div>
-          <Link
-            href="/auth/sign-in"
-            className="px-6 py-2 rounded-lg bg-gold text-bg font-semibold hover:opacity-90 transition"
-          >
-            Sign in
+          <span className="text-2xl font-black tracking-tighter gradient-text">STACK</span>
+        </Link>
+
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-text-secondary">
+          <Link href="#features" className="hover:text-white transition">Features</Link>
+          <Link href="#methods" className="hover:text-white transition">Methods</Link>
+          <Link href="#pricing" className="hover:text-white transition">Pricing</Link>
+          <Link href="#community" className="hover:text-white transition">Community</Link>
+          <Link href="#blog" className="hover:text-white transition">Blog</Link>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <Link href="/auth/sign-in" className="text-sm font-semibold hover:text-white transition hidden sm:block">Sign In</Link>
+          <Link href="/auth/sign-up" className="px-6 py-2.5 rounded-full btn-neon text-sm font-bold">
+            Start Free
           </Link>
         </div>
-      </nav>
+      </div>
+    </nav>
+  );
+};
+
+const Typewriter = ({ words }: { words: string[] }) => {
+  const [index, setIndex] = useState(0);
+  const [subIndex, setSubIndex] = useState(0);
+  const [reverse, setReverse] = useState(false);
+
+  useEffect(() => {
+    if (subIndex === words[index].length + 1 && !reverse) {
+      setTimeout(() => setReverse(true), 2000);
+      return;
+    }
+
+    if (subIndex === 0 && reverse) {
+      setReverse(false);
+      setIndex((prev) => (prev + 1) % words.length);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setSubIndex((prev) => prev + (reverse ? -1 : 1));
+    }, Math.max(reverse ? 75 : subIndex === words[index].length ? 1000 : 150, parseInt((Math.random() * 350).toString())));
+
+    return () => clearTimeout(timeout);
+  }, [subIndex, index, reverse]);
+
+  return (
+    <span className="gradient-text">
+      {words[index].substring(0, subIndex)}
+      <span className="animate-pulse">|</span>
+    </span>
+  );
+};
+
+// --- Main Page ---
+
+export default function LandingPage() {
+  const methods = [
+    { name: "AI Content Agency", income: "$8k", difficulty: "Intermediate", icon: "🤖" },
+    { name: "YouTube Automation", income: "$5k", difficulty: "Beginner", icon: "📺" },
+    { name: "TikTok Creativity", income: "$3k", difficulty: "Beginner", icon: "📱" },
+    { name: "AI Ghostwriting", income: "$15k", difficulty: "Advanced", icon: "✍️" },
+    { name: "Newsletter Biz", income: "$10k", difficulty: "Intermediate", icon: "📧" },
+    { name: "Micro-SaaS Builder", income: "$20k", difficulty: "Advanced", icon: "🛠️" },
+  ];
+
+  return (
+    <div className="relative min-h-screen mesh-gradient overflow-hidden">
+      <div className="noise" />
+      <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <motion.div
-          className="max-w-4xl mx-auto text-center"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.h1
-            className="text-6xl sm:text-7xl md:text-8xl font-serif font-bold italic text-text-primary mb-6"
-            variants={itemVariants}
+      <section className="relative pt-44 pb-32 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-full glass border-gold/20 mb-8"
           >
-            Your AI Money<br />Operating System
+            <span className="text-xs font-bold text-gold">🔥 50,000+ Stackers earning online</span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-5xl md:text-8xl font-black tracking-tight mb-8 leading-[1.1]"
+          >
+            Turn AI Into Your<br />
+            <Typewriter words={["Income Stream", "Side Hustle", "Full-Time Job", "Empire"]} />
           </motion.h1>
 
           <motion.p
-            className="text-xl text-text-secondary mb-8 max-w-2xl mx-auto"
-            variants={itemVariants}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="max-w-2xl text-lg md:text-xl text-text-secondary mb-12"
           >
-            Everything you need to make money online using AI tools, automation, and digital leverage. 5,000+ Gen Z creators already earning.
+            The only membership that gives you the exact playbooks, AI prompts, and mentorship to make real money online — starting this week.
           </motion.p>
 
-          <motion.div className="flex gap-4 justify-center mb-12 flex-wrap" variants={itemVariants}>
-            <Link
-              href="/auth/sign-up"
-              className="px-8 py-4 rounded-lg bg-gradient-gold text-bg font-semibold hover:opacity-90 transition text-lg"
-            >
-              Start Free Trial →
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-col sm:flex-row gap-4 items-center"
+          >
+            <Link href="/auth/sign-up" className="px-10 py-5 rounded-full btn-neon text-lg font-black w-full sm:w-auto">
+              Start Stacking Free →
             </Link>
-            <button className="px-8 py-4 rounded-lg border border-gold-border text-gold hover:bg-gold-bg transition text-lg">
-              Watch Demo
+            <button className="px-10 py-5 rounded-full glass border-white/10 hover:bg-white/5 transition text-lg font-bold flex items-center gap-2 w-full sm:w-auto">
+              <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
+                <div className="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-white border-b-[5px] border-b-transparent ml-1" />
+              </div>
+              Watch 2-min demo
             </button>
           </motion.div>
 
-          {/* Stats */}
+          {/* Social Proof Bar */}
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-16"
-            variants={itemVariants}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-16 flex items-center gap-4"
           >
-            {[
-              { label: 'Users Earning', value: '5,000+' },
-              { label: 'Avg Income/Month', value: '$2,400' },
-              { label: 'Money Methods', value: '50+' },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="p-6 rounded-lg border border-border glass hover-lift"
-              >
-                <div className="text-gold text-2xl font-bold">{stat.value}</div>
-                <div className="text-text-secondary text-sm mt-2">{stat.label}</div>
+            <div className="flex -space-x-3">
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} className="w-10 h-10 rounded-full border-2 border-bg-primary bg-bg-card overflow-hidden">
+                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=user${i}`} alt="user" />
+                </div>
+              ))}
+            </div>
+            <p className="text-sm font-medium text-text-secondary">
+              Join <span className="text-white font-bold">50,847</span> members
+            </p>
+          </motion.div>
+
+          {/* Hero Image Mockup */}
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 40 }}
+            transition={{ duration: 1, delay: 0.4 }}
+            className="mt-20 relative w-full max-w-5xl mx-auto rounded-2xl border border-white/10 glass p-3"
+          >
+            <div className="rounded-xl bg-bg-primary aspect-video flex items-center justify-center overflow-hidden">
+              <div className="w-full h-full bg-gradient-premium opacity-5 absolute animate-pulse-slow" />
+              <img src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80" className="w-full h-full object-cover opacity-20" alt="Dashboard" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="p-8 rounded-2xl glass border-white/20 flex flex-col items-center">
+                  <div className="text-6xl font-black gradient-text mb-4">$1,247.50</div>
+                  <div className="text-text-secondary font-medium">Earned this week</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-20 bg-bg-secondary relative border-y border-border">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+          {[
+            { label: "Earned by members", value: "$2.4M+" },
+            { label: "Money methods", value: "65+" },
+            { label: "AI prompts", value: "1,000+" },
+            { label: "Average rating", value: "4.9★" },
+          ].map((stat, i) => (
+            <div key={i}>
+              <div className="text-4xl md:text-5xl font-black text-white mb-2">{stat.value}</div>
+              <div className="text-sm font-medium text-text-muted uppercase tracking-widest">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Methods Section */}
+      <section id="methods" className="py-32 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-black mb-4">65+ Proven Ways to Make Money with AI</h2>
+            <p className="text-xl text-text-secondary">New methods added every single week</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {methods.map((method, i) => (
+              <div key={i} className="card-premium p-8 rounded-3xl relative overflow-hidden group">
+                <div className="text-4xl mb-6">{method.icon}</div>
+                <h3 className="text-2xl font-bold mb-2">{method.name}</h3>
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="text-xs font-black px-2 py-1 rounded bg-neon-green/10 text-neon-green">Avg {method.income}/mo</span>
+                  <span className="text-xs font-bold text-text-muted">{method.difficulty}</span>
+                </div>
+                <Link href="/dashboard" className="text-sm font-bold text-gold group-hover:text-white transition flex items-center gap-2">
+                  Learn Method <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </Link>
               </div>
             ))}
-          </motion.div>
-        </motion.div>
+          </div>
+
+          <div className="mt-16 text-center">
+            <button className="px-8 py-4 rounded-full border border-white/10 font-bold hover:bg-white/5 transition">
+              View All 65 Methods →
+            </button>
+          </div>
+        </div>
       </section>
 
-      {/* How People Make Money */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-surface/50">
-        <motion.div
-          className="max-w-6xl mx-auto"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-4xl font-serif font-bold italic text-text-primary text-center mb-4">
-            How Creators Are Making $1K–10K/Month
-          </h2>
-          <p className="text-text-secondary text-center mb-16 max-w-2xl mx-auto">
-            Real money, real methods, real results. No fake guru energy.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Features Grid */}
+      <section id="features" className="py-32 px-6 bg-bg-secondary/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {[
-              {
-                title: 'AI Content Agency',
-                desc: 'Create content for businesses using AI',
-                income: '$800–2,500/mo',
-              },
-              {
-                title: 'Digital Products',
-                desc: 'Sell templates, guides, and workflows',
-                income: '$500–5,000/mo',
-              },
-              {
-                title: 'AI Freelancer',
-                desc: 'Offer copywriting, SEO, design at 10x speed',
-                income: '$1,000–4,000/mo',
-              },
-              {
-                title: 'Paid Newsletter',
-                desc: 'Go micro-niche and charge per email',
-                income: '$500–10,000/mo',
-              },
-              {
-                title: 'Paid Community',
-                desc: 'Build accountability + transformation',
-                income: '$1,000–8,000/mo',
-              },
-              {
-                title: 'AI Automation',
-                desc: 'Sell automation workflows to agencies',
-                income: '$2,000–15,000/mo',
-              },
-            ].map((method, idx) => (
-              <motion.div
-                key={idx}
-                className="p-6 rounded-xl border border-border glass hover-lift"
-                whileHover={{ y: -4 }}
-              >
-                <h3 className="font-semibold text-text-primary mb-2">{method.title}</h3>
-                <p className="text-text-secondary text-sm mb-4">{method.desc}</p>
-                <div className="text-gold font-semibold">{method.income}</div>
-              </motion.div>
+              { title: "Weekly Playbooks", desc: "Step-by-step money guides, new every Monday", icon: "📖" },
+              { title: "AI Mentor", desc: "24/7 Claude-powered coach for your questions", icon: "🤖" },
+              { title: "Prompt Vault", desc: "1,000+ copy-paste AI prompts that earn", icon: "✨" },
+              { title: "Personal Roadmap", desc: "$0→$1K→$5K→$10K custom path", icon: "🗺" },
+              { title: "Resource Library", desc: "Templates, contracts, scripts, frameworks", icon: "🛠" },
+              { title: "Gamification", desc: "XP, levels, streaks, leaderboards", icon: "🏆" },
+              { title: "Community", desc: "Private Discord with 5,000+ earners", icon: "👥" },
+              { title: "Masterclasses", desc: "Video courses from 6-figure creators", icon: "🎓" },
+              { title: "Income Tracker", desc: "Log and visualize your earnings", icon: "📊" },
+            ].map((feature, i) => (
+              <div key={i} className="flex flex-col items-start gap-4">
+                <div className="w-14 h-14 rounded-2xl glass border-white/10 flex items-center justify-center text-3xl">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold">{feature.title}</h3>
+                <p className="text-text-secondary leading-relaxed">{feature.desc}</p>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       </section>
 
-      {/* Core Features */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
-        <motion.div
-          className="max-w-6xl mx-auto"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-4xl font-serif font-bold italic text-text-primary text-center mb-4">
-            Everything You Need
-          </h2>
-          <p className="text-text-secondary text-center mb-16 max-w-2xl mx-auto">
-            All-in-one platform for learning, building, and monetizing online.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {[
-              {
-                icon: '📖',
-                title: 'Weekly Playbooks',
-                desc: 'New money-making method every week with step-by-step execution guide',
-              },
-              {
-                icon: '✨',
-                title: 'Prompt Vault',
-                desc: '1,000+ AI prompts for copywriting, marketing, and automation',
-              },
-              {
-                icon: '🛠',
-                title: 'Resource Library',
-                desc: 'Templates, scripts, and frameworks ready to use',
-              },
-              {
-                icon: '🤖',
-                title: 'AI Tools Database',
-                desc: 'Every tool you need with tutorials and income angles',
-              },
-              {
-                icon: '🎯',
-                title: 'Personal Roadmaps',
-                desc: 'Your path from $0 to $1K, $5K, or $10K/month',
-              },
-              {
-                icon: '👥',
-                title: 'Private Community',
-                desc: 'Discord community of 5,000+ creators sharing wins',
-              },
-              {
-                icon: '🤖',
-                title: 'AI Mentor',
-                desc: 'Ask me anything about making money, pricing, scaling',
-              },
-              {
-                icon: '🏆',
-                title: 'Gamification',
-                desc: 'XP, levels, achievements, and leaderboards',
-              },
-            ].map((feature, idx) => (
-              <motion.div
-                key={idx}
-                className="p-6 rounded-lg border border-border glass hover-lift"
-                whileHover={{ y: -4 }}
-              >
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="font-semibold text-text-primary mb-2">{feature.title}</h3>
-                <p className="text-text-secondary text-sm">{feature.desc}</p>
-              </motion.div>
-            ))}
+      {/* Pricing Section */}
+      <section id="pricing" className="py-32 px-6 relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-black mb-4">Choose Your Path</h2>
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <span className="text-sm font-bold text-white">Monthly</span>
+              <div className="w-12 h-6 rounded-full bg-gold/30 p-1 flex justify-end">
+                <div className="w-4 h-4 rounded-full bg-gold" />
+              </div>
+              <span className="text-sm font-bold text-text-muted">Yearly (Save 17%)</span>
+            </div>
           </div>
-        </motion.div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-surface/50">
-        <motion.div
-          className="max-w-6xl mx-auto"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-4xl font-serif font-bold italic text-text-primary text-center mb-4">
-            Simple, Transparent Pricing
-          </h2>
-          <p className="text-text-secondary text-center mb-16">Start free, upgrade when ready</p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              {
-                name: 'Free',
-                price: '$0',
-                features: ['Weekly roadmap', 'Limited playbooks', 'Community access'],
-              },
-              {
-                name: 'Starter',
-                price: '$19',
-                features: ['Everything in Free', 'Full playbook library', 'Prompt vault access'],
-              },
-              {
-                name: 'Pro',
-                price: '$49',
-                highlighted: true,
-                features: [
-                  'Everything in Starter',
-                  'Full resource vault',
-                  'Monthly live calls',
-                  'AI tool database',
-                ],
-              },
-              {
-                name: 'Elite',
-                price: '$149',
-                features: [
-                  'Everything in Pro',
-                  'Private mastermind',
-                  'Direct mentorship',
-                  'Done-for-you templates',
-                ],
-              },
-            ].map((plan, idx) => (
-              <motion.div
-                key={idx}
-                className={`p-8 rounded-lg border ${
-                  plan.highlighted
-                    ? 'border-gold bg-gold-bg'
-                    : 'border-border glass'
-                } hover-lift`}
-                whileHover={{ y: -4 }}
-              >
-                <h3 className="font-semibold text-text-primary mb-2">{plan.name}</h3>
-                <div className="text-3xl font-bold text-gold mb-6">
-                  {plan.price}
-                  <span className="text-sm text-text-secondary">/mo</span>
-                </div>
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="text-text-secondary text-sm flex gap-2">
-                      <span className="text-gold">✓</span> {feature}
-                    </li>
-                  ))}
+            {/* Free */}
+            <div className="card-premium p-8 rounded-3xl flex flex-col">
+              <h3 className="text-xl font-bold mb-2">Free</h3>
+              <div className="text-4xl font-black mb-8">$0</div>
+              <ul className="space-y-4 mb-10 flex-1">
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ 3 playbooks per month</li>
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ 50 AI prompts</li>
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ Community (read-only)</li>
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ Basic roadmap</li>
+              </ul>
+              <button className="w-full py-4 rounded-xl border border-white/10 font-bold hover:bg-white/5 transition">Get Started Free</button>
+            </div>
+
+            {/* Starter */}
+            <div className="card-premium p-8 rounded-3xl flex flex-col">
+              <h3 className="text-xl font-bold mb-2">Starter</h3>
+              <div className="text-4xl font-black mb-8">$19 <span className="text-sm text-text-muted">/mo</span></div>
+              <ul className="space-y-4 mb-10 flex-1">
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ All weekly playbooks</li>
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ Full prompt vault</li>
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ Resource library</li>
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ AI Mentor (50 msgs)</li>
+              </ul>
+              <button className="w-full py-4 rounded-xl glass border-gold/30 text-gold font-bold hover:bg-gold/10 transition">Start Starter</button>
+            </div>
+
+            {/* Pro */}
+            <div className="p-[1px] rounded-3xl bg-gradient-premium flex flex-col relative">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-neon-green text-bg-primary text-[10px] font-black uppercase tracking-widest">Most Popular</div>
+              <div className="flex-1 p-8 rounded-[23px] bg-bg-card flex flex-col">
+                <h3 className="text-xl font-bold mb-2">Pro</h3>
+                <div className="text-4xl font-black mb-8 text-white">$49 <span className="text-sm text-text-muted">/mo</span></div>
+                <ul className="space-y-4 mb-10 flex-1">
+                  <li className="text-sm text-text-secondary flex items-center gap-2">✓ Everything in Starter</li>
+                  <li className="text-sm text-text-secondary flex items-center gap-2">✓ AI Mentor (unlimited)</li>
+                  <li className="text-sm text-text-secondary flex items-center gap-2">✓ Masterclass videos</li>
+                  <li className="text-sm text-text-secondary flex items-center gap-2">✓ Income tracker</li>
+                  <li className="text-sm text-text-secondary flex items-center gap-2">✓ Priority support</li>
                 </ul>
-                <button
-                  className={`w-full py-2 rounded-lg font-semibold transition ${
-                    plan.highlighted
-                      ? 'bg-gold text-bg hover:opacity-90'
-                      : 'border border-gold-border text-gold hover:bg-gold-bg'
-                  }`}
-                >
-                  Get Started
-                </button>
-              </motion.div>
-            ))}
+                <button className="w-full py-4 rounded-xl btn-neon font-bold">Go Pro</button>
+              </div>
+            </div>
+
+            {/* Elite */}
+            <div className="card-premium p-8 rounded-3xl flex flex-col">
+              <h3 className="text-xl font-bold mb-2">Elite</h3>
+              <div className="text-4xl font-black mb-8">$149 <span className="text-sm text-text-muted">/mo</span></div>
+              <ul className="space-y-4 mb-10 flex-1">
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ Everything in Pro</li>
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ Private mastermind</li>
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ 1-on-1 monthly call</li>
+                <li className="text-sm text-text-secondary flex items-center gap-2">✓ DFY templates</li>
+              </ul>
+              <button className="w-full py-4 rounded-xl border border-white/10 font-bold hover:bg-white/5 transition">Apply for Elite</button>
+            </div>
           </div>
-        </motion.div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <motion.div
-          className="max-w-6xl mx-auto"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-4xl font-serif font-bold italic text-text-primary text-center mb-16">
-            What Members Say
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                quote:
-                  'Made $800 my first month just following the playbooks. The prompts saved me 20 hours a week.',
-                author: 'Sarah, 21',
-              },
-              {
-                quote:
-                  'Finally understand how to actually monetize. This is the blueprint everyone needs.',
-                author: 'Marcus, 23',
-              },
-              {
-                quote:
-                  'The community keeps me accountable. Seeing others win makes me believe it\'s possible.',
-                author: 'Alex, 20',
-              },
-            ].map((testimonial, idx) => (
-              <motion.div
-                key={idx}
-                className="p-6 rounded-lg border border-border glass hover-lift"
-                whileHover={{ y: -4 }}
-              >
-                <p className="text-text-primary mb-4">"{testimonial.quote}"</p>
-                <p className="text-gold font-semibold">{testimonial.author}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-gold">
-        <motion.div
-          className="max-w-4xl mx-auto text-center"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-4xl font-serif font-bold italic text-bg mb-4">
-            Ready to start making money?
-          </h2>
-          <p className="text-bg/80 mb-8">
-            Join 5,000+ creators already building their income online.
-          </p>
-          <Link
-            href="/auth/sign-up"
-            className="px-8 py-4 rounded-lg bg-bg text-gold font-semibold hover:opacity-90 transition text-lg inline-block"
-          >
-            Start Your Free Trial →
-          </Link>
-        </motion.div>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12 px-4 sm:px-6 lg:px-8 bg-bg/50">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      <footer className="py-20 px-6 border-t border-border bg-bg-primary">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
           <div>
-            <div className="font-serif text-xl font-bold text-text-primary mb-4">STACK</div>
-            <p className="text-text-secondary text-sm">
-              The AI money operating system for Gen Z.
+            <Link href="/" className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 rounded bg-gradient-premium flex items-center justify-center">
+                <svg className="w-5 h-5 text-bg-primary fill-current" viewBox="0 0 24 24">
+                  <path d="M13 10V3L4 14H11V21L20 10H13Z" />
+                </svg>
+              </div>
+              <span className="text-2xl font-black tracking-tighter text-white">STACK</span>
+            </Link>
+            <p className="text-text-muted text-sm leading-relaxed">
+              Built for the generation that refuses to be broke. The only AI money operating system you'll ever need.
             </p>
           </div>
           <div>
-            <h4 className="font-semibold text-text-primary mb-4">Product</h4>
-            <ul className="space-y-2 text-sm text-text-secondary">
-              <li><a href="#" className="hover:text-text-primary transition">Features</a></li>
-              <li><a href="#" className="hover:text-text-primary transition">Pricing</a></li>
-              <li><a href="#" className="hover:text-text-primary transition">Roadmap</a></li>
+            <h4 className="font-bold mb-6 uppercase text-xs tracking-widest text-text-muted">Product</h4>
+            <ul className="space-y-4 text-sm text-text-secondary font-medium">
+              <li><Link href="#features">Features</Link></li>
+              <li><Link href="#methods">Methods</Link></li>
+              <li><Link href="#pricing">Pricing</Link></li>
+              <li><Link href="#community">Community</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold text-text-primary mb-4">Company</h4>
-            <ul className="space-y-2 text-sm text-text-secondary">
-              <li><a href="#" className="hover:text-text-primary transition">About</a></li>
-              <li><a href="#" className="hover:text-text-primary transition">Blog</a></li>
-              <li><a href="#" className="hover:text-text-primary transition">Contact</a></li>
+            <h4 className="font-bold mb-6 uppercase text-xs tracking-widest text-text-muted">Legal</h4>
+            <ul className="space-y-4 text-sm text-text-secondary font-medium">
+              <li><Link href="/privacy">Privacy Policy</Link></li>
+              <li><Link href="/terms">Terms of Service</Link></li>
+              <li><Link href="/refunds">Refund Policy</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold text-text-primary mb-4">Legal</h4>
-            <ul className="space-y-2 text-sm text-text-secondary">
-              <li><a href="#" className="hover:text-text-primary transition">Privacy</a></li>
-              <li><a href="#" className="hover:text-text-primary transition">Terms</a></li>
-            </ul>
+            <h4 className="font-bold mb-6 uppercase text-xs tracking-widest text-text-muted">Newsletter</h4>
+            <p className="text-sm text-text-secondary mb-4">Get 1 free money method every week.</p>
+            <div className="flex gap-2">
+              <input type="email" placeholder="Email address" className="bg-bg-card border border-border rounded-lg px-4 py-2 flex-1 text-sm" />
+              <button className="px-4 py-2 rounded-lg bg-gold text-bg-primary font-bold text-sm">Join</button>
+            </div>
           </div>
         </div>
-        <div className="border-t border-border pt-8 text-center text-text-secondary text-sm">
-          <p>&copy; 2025 STACK. All rights reserved.</p>
+        <div className="max-w-7xl mx-auto pt-8 border-t border-border flex flex-col md:row items-center justify-between gap-4">
+          <p className="text-text-muted text-xs">&copy; 2025 STACK. All rights reserved.</p>
+          <div className="flex gap-6">
+            {/* Social icons could go here */}
+          </div>
         </div>
       </footer>
     </div>

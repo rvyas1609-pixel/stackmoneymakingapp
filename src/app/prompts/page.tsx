@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
@@ -13,33 +13,58 @@ interface Prompt {
   rating: number;
 }
 
+const PROMPTS: Prompt[] = [
+  {
+    id: '1',
+    title: 'Side Hustle Finder',
+    content: 'I have [skill], [X hrs/week] available, and want to make [$X/month]. Give me 3 specific side hustles with exact first steps.',
+    category: 'income',
+    useCount: 340,
+    rating: 4.8,
+  },
+  {
+    id: '2',
+    title: 'Cold DM that Converts',
+    content: 'Write me a cold DM to [type of business] offering [my service]. Make it hyper-specific to their pain point, max 4 lines.',
+    category: 'copywriting',
+    useCount: 820,
+    rating: 4.9,
+  },
+  {
+    id: '3',
+    title: 'TikTok Hook Factory',
+    content: 'Give me 10 TikTok opening hooks for content about [topic]. Use different emotional triggers: curiosity, FOMO, controversy, and aspiration.',
+    category: 'video',
+    useCount: 1200,
+    rating: 4.7,
+  },
+  {
+    id: '4',
+    title: 'Pricing Strategy',
+    content: 'I offer [service] and currently charge [price]. Analyze whether I’m undercharging. Give me a justified new price with reasoning.',
+    category: 'business',
+    useCount: 560,
+    rating: 4.8,
+  },
+  {
+    id: '5',
+    title: 'Budget Optimizer',
+    content: 'My monthly income is [X] and expenses are: [list]. Find where I’m leaking money and give me a plan to free up [Y] more per month.',
+    category: 'money',
+    useCount: 420,
+    rating: 4.6,
+  },
+];
+
 export default function PromptsPage() {
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchPrompts = async () => {
-      try {
-        const res = await fetch('/api/prompts');
-        const { data } = await res.json();
-        setPrompts(data || []);
-      } catch (error) {
-        console.error('Failed to fetch prompts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPrompts();
-  }, []);
 
   const categories = ['all', 'copywriting', 'video', 'marketing', 'business', 'automation', 'money'];
 
   const filtered = selectedCategory === 'all'
-    ? prompts
-    : prompts.filter(p => p.category === selectedCategory);
+    ? PROMPTS
+    : PROMPTS.filter(p => p.category === selectedCategory);
 
   const handleCopy = (id: string, content: string) => {
     navigator.clipboard.writeText(content);
@@ -103,54 +128,50 @@ export default function PromptsPage() {
           </motion.div>
 
           {/* Prompts Grid */}
-          {loading ? (
-            <div className="text-center text-text-secondary">Loading prompts...</div>
-          ) : (
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ staggerChildren: 0.05 }}
-            >
-              {filtered.map((prompt, idx) => (
-                <motion.div
-                  key={prompt.id}
-                  className="p-6 rounded-lg border border-border glass hover-lift group"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  whileHover={{ y: -4 }}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-text-primary flex-1">{prompt.title}</h3>
-                    <span className="text-xs px-2 py-1 rounded bg-gold-bg text-gold font-semibold whitespace-nowrap ml-2">
-                      {prompt.category}
-                    </span>
-                  </div>
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ staggerChildren: 0.05 }}
+          >
+            {filtered.map((prompt, idx) => (
+              <motion.div
+                key={prompt.id}
+                className="p-6 rounded-lg border border-border glass hover-lift group"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                whileHover={{ y: -4 }}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="font-semibold text-text-primary flex-1">{prompt.title}</h3>
+                  <span className="text-xs px-2 py-1 rounded bg-gold-bg text-gold font-semibold whitespace-nowrap ml-2">
+                    {prompt.category}
+                  </span>
+                </div>
 
-                  <p className="text-text-secondary text-sm mb-4 line-clamp-3">{prompt.content}</p>
+                <p className="text-text-secondary text-sm mb-4 line-clamp-3">{prompt.content}</p>
 
-                  <div className="flex items-center justify-between text-xs text-text-tertiary mb-4">
-                    <span>⭐ {prompt.rating.toFixed(1)} • {prompt.useCount} uses</span>
-                  </div>
+                <div className="flex items-center justify-between text-xs text-text-tertiary mb-4">
+                  <span>⭐ {prompt.rating.toFixed(1)} • {prompt.useCount} uses</span>
+                </div>
 
-                  <div className="flex gap-2">
-                    <button className="flex-1 py-2 rounded text-sm font-semibold transition border border-border hover:border-gold-border hover:text-gold">
-                      Save
-                    </button>
-                    <button
-                      onClick={() => handleCopy(prompt.id, prompt.content)}
-                      className="flex-1 py-2 bg-gold text-bg rounded text-sm font-semibold hover:opacity-90 transition"
-                    >
-                      {copiedId === prompt.id ? '✓ Copied' : 'Copy'}
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
+                <div className="flex gap-2">
+                  <button className="flex-1 py-2 rounded text-sm font-semibold transition border border-border hover:border-gold-border hover:text-gold">
+                    Save
+                  </button>
+                  <button
+                    onClick={() => handleCopy(prompt.id, prompt.content)}
+                    className="flex-1 py-2 bg-gold text-bg rounded text-sm font-semibold hover:opacity-90 transition"
+                  >
+                    {copiedId === prompt.id ? '✓ Copied' : 'Copy'}
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
 
-          {!loading && filtered.length === 0 && (
+          {filtered.length === 0 && (
             <div className="text-center text-text-secondary py-12">
               No prompts found in this category.
             </div>

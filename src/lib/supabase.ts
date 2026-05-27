@@ -11,6 +11,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 // Create the Supabase client
 // This is what you'll use to read and write data
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export default supabase
 
 // 🔒 IMPORTANT: These are "public" credentials
 // They only allow users to access their own data (Row Level Security)

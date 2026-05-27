@@ -1,0 +1,6 @@
+stack-app-mobile/
+stack-app-source/
+android/
+node_modules/
+.next/
+out/

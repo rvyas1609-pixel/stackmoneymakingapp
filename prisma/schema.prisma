@@ -40,8 +40,13 @@ model User {
   communityProfile CommunityProfile?
   messages      Message[]
   achievements  Achievement[]
+  incomeEntries IncomeEntry[]
+  aiConversations AIConversation[]
   xp            Int @default(0)
-  
+  level         Int @default(1)
+  streakDays    Int @default(0)
+  lastActive    DateTime?
+
   // Bookmarks & favorites
   favoriteHustles String[]
   
@@ -336,6 +341,32 @@ model Achievement {
   unlockedAt    DateTime  @default(now())
   
   @@unique([userId, title])
+}
+
+// Income Tracking
+model IncomeEntry {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  methodId      String?
+  amount        Float
+  date          DateTime
+  notes         String?
+
+  createdAt     DateTime  @default(now())
+}
+
+// AI Interactions
+model AIConversation {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messages      Json      // Array of message objects
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 // Analytics

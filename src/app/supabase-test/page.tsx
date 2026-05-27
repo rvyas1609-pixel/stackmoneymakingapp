@@ -1,35 +1,38 @@
 'use client' // This tells Next.js this runs in the browser (not server)
 
 import { useState } from 'react'
+import supabase from '@/lib/supabase'
+
+const TEST_EMAIL_PREFIX = 'test+'
 
 export default function SupabaseTestPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [users, setUsers] = useState<any[]>([])
 
-  // Function to add a new user via our API
+  const createTestEmail = () => `${TEST_EMAIL_PREFIX}${Date.now()}@example.com`
+
   const addUser = async () => {
     setLoading(true)
     setMessage('Adding user...')
 
     try {
-      // Call our API endpoint instead of Supabase directly
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'John Doe',
-          age: 25,
-        }),
-      })
+      const email = createTestEmail()
+      const displayName = `Test User ${new Date().toLocaleTimeString()}`
+      const username = displayName.toLowerCase().replace(/\s+/g, '-')
 
-      const data = await response.json()
+      const { data, error } = await supabase
+        .from('users')
+        .insert([
+          { email, username, displayName, clerkId: `test_${Date.now()}` },
+        ])
+        .select('id, email, displayName')
 
-      if (!response.ok) {
-        setMessage(`❌ Error: ${data.error}`)
-      } else {
-        setMessage(`✅ User added! ID: ${data[0].id}`)
+      if (error || !data?.length) {
+        throw new Error(error?.message || 'Failed to create test user')
       }
+
+      setMessage(`✅ User added! ID: ${data[0].id}`)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setMessage(`❌ Failed: ${message}`)
@@ -38,26 +41,22 @@ export default function SupabaseTestPage() {
     setLoading(false)
   }
 
-  // Function to read all users via our API
   const getUsers = async () => {
     setLoading(true)
     setMessage('Loading users...')
 
     try {
-      // Call our API endpoint
-      const response = await fetch('/api/users', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      })
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, email, displayName')
+        .like('email', `${TEST_EMAIL_PREFIX}%`)
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setMessage(`❌ Error: ${data.error}`)
-      } else {
-        setUsers(data || [])
-        setMessage(`✅ Found ${data.length} users!`)
+      if (error) {
+        throw new Error(error.message)
       }
+
+      setUsers(data || [])
+      setMessage(`✅ Found ${data?.length ?? 0} users!`)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setMessage(`❌ Failed: ${message}`)
@@ -66,26 +65,22 @@ export default function SupabaseTestPage() {
     setLoading(false)
   }
 
-  // Function to clear all users via our API
   const clearUsers = async () => {
     setLoading(true)
-    setMessage('Clearing all users...')
+    setMessage('Clearing test users...')
 
     try {
-      // Call our API endpoint
-      const response = await fetch('/api/users', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      })
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .like('email', `${TEST_EMAIL_PREFIX}%`)
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setMessage(`❌ Error: ${data.error}`)
-      } else {
-        setMessage(`✅ All users cleared!`)
-        setUsers([])
+      if (error) {
+        throw new Error(error.message)
       }
+
+      setMessage('✅ Test users cleared!')
+      setUsers([])
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setMessage(`❌ Failed: ${message}`)
@@ -95,7 +90,7 @@ export default function SupabaseTestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-500 to-pink-500 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-dark-blue via-bg-primary to-gold p-8">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-2xl p-8">
         <h1 className="text-4xl font-bold text-gray-800 mb-2">
           🗄️ Supabase Test
@@ -153,8 +148,8 @@ export default function SupabaseTestPage() {
                   className="bg-white p-3 rounded-lg border border-gray-300"
                 >
                   <p className="font-semibold">ID: {user.id}</p>
-                  <p>Name: {user.name}</p>
-                  <p>Age: {user.age}</p>
+                  <p>Name: {user.displayName || user.email}</p>
+                  <p className="text-sm text-gray-500">{user.email}</p>
                 </div>
               ))}
             </div>
