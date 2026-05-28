@@ -1,111 +1,78 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0a1428;
-  --bg-secondary: #0d1b2a;
-  --bg-card: #132d44;
-  --bg-elevated: #1a3a52;
-  --border: #2d5a7a;
-  --gold: #d4af37;
-  --gold-light: #e6c547;
-  --gold-dark: #c9a961;
-  --dark-blue: #0f2f4f;
-  --dark-blue-light: #1e40af;
-  --accent: #e6c547;
-  --text-primary: #ffffff;
-  --text-secondary: #c9b8a0;
-  --text-muted: #7a8a9a;
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 10, 20, 40;
+  --background-end-rgb: 19, 45, 68;
 }
 
-body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
+@layer base {
+  body {
+    @apply bg-bg-primary text-text-primary;
+  }
 }
 
 @layer components {
   .glass {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    @apply bg-bg-card/80 backdrop-blur-md border border-border;
+  }
+
+  .glass-elevated {
+    @apply bg-bg-elevated/90 backdrop-blur-lg border border-border/50 shadow-premium;
+  }
+
+  .btn-premium {
+    @apply bg-gradient-premium text-bg-primary font-bold py-3 px-8 rounded-full
+           hover:shadow-gold-glow transition-all duration-300 transform hover:-translate-y-1
+           active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed text-center;
   }
 
   .btn-neon {
-    background: var(--gold);
-    box-shadow: 0 0 30px rgba(212,175,55,0.5);
-    transition: all 0.3s ease;
-    color: #0a1428;
-    font-weight: 600;
+    @apply bg-gradient-premium text-bg-primary font-bold py-3 px-8 rounded-full
+           hover:shadow-gold-glow transition-all duration-300 transform hover:-translate-y-1
+           active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed text-center;
   }
 
-  .btn-neon:hover {
-    box-shadow: 0 0 50px rgba(212,175,55,0.7);
-    transform: translateY(-2px);
-    background: var(--gold-light);
-  }
-
-  .gradient-text {
-    background: linear-gradient(135deg, #d4af37, #e6c547);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .btn-outline {
+    @apply border border-gold text-gold font-bold py-3 px-8 rounded-full
+           hover:bg-gold/10 transition-all duration-300 transform hover:-translate-y-1 text-center;
   }
 
   .card-premium {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    @apply glass rounded-2xl p-6 hover:border-gold/50 transition-colors duration-300;
   }
 
-  .card-premium:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 60px rgba(212,175,55,0.15);
-    border-color: rgba(212,175,55,0.4);
-  }
-
-  .mesh-gradient {
-    background-color: #0a1428;
-    background-image:
-      radial-gradient(at 0% 0%, hsla(205,100%,20%,0.25) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(42,100%,50%,0.15) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(217,91%,30%,0.15) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, hsla(42,100%,50%,0.15) 0px, transparent 50%);
+  .text-gradient {
+    @apply bg-gradient-premium bg-clip-text text-transparent;
   }
 }
 
-/* Noise overlay */
-.noise {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  opacity: 0.03;
-  z-index: 9999;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-}
-
-/* Custom scrollbar */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  @apply bg-bg-primary;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  @apply bg-border rounded-full hover:bg-gold/50 transition-colors;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+/* Auth Overrides */
+.cl-internal-phv3zt {
+  display: none !important;
+}
+
+/* Animations */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.2; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

@@ -53,7 +53,7 @@ A premium subscription-based web app helping Gen-Z users make money online using
 - PostgreSQL database
 - API keys for:
   - Clerk (Authentication)
-  - Stripe (Payments)
+  - Coinbase Commerce (Crypto Payments)
   - Anthropic (Claude API)
   - OpenAI
   - Discord (Bot token)
@@ -201,9 +201,10 @@ vercel deploy
 - Upload AI tools
 
 ### Features
-- Toggle subscription tiers in `stripe.config.ts`
+- Toggle subscription tiers in `src/components/landing/PricingSection.tsx`
 - Customize gamification rules in `lib/gamification.ts`
 - Modify email templates in `templates/`
+- Setup crypto payments in `CRYPTO_SETUP.md`
 
 ## Performance
 

@@ -77,17 +77,14 @@ model Subscription {
   userId        String    @unique
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  stripeId      String?   @unique
-  priceId       String?
-  tier          String    @default("free") // free, starter, pro, elite
+  paymentProvider String?   @default("coinbase") // coinbase, manual, etc.
+  paymentId       String?   @unique // Crypto charge ID
+  tier            String    @default("free") // free, starter, pro, elite
   
-  status        String    @default("active") // active, canceled, past_due, unpaid
+  status        String    @default("active") // active, completed, expired
   currentPeriodStart DateTime?
   currentPeriodEnd DateTime?
-  canceledAt    DateTime?
-  
-  customerId    String?
-  
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
