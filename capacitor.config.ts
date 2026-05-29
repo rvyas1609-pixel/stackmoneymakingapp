@@ -2,8 +2,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.stackapp.mobile',
-  appName: 'stack-app',
-  webDir: 'out'
+  appName: 'STACK',
+  webDir: 'out',
+  server: {
+    androidScheme: 'https'
+  }
 };
 
 export default config;
