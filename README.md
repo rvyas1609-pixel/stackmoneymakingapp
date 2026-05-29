@@ -256,3 +256,4 @@ MIT
 **Built for Gen-Z creators and hustlers who actually want to make money.**
 
 Version 1.0 - May 2025
+n# stackmoneymakingapp
