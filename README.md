@@ -38,10 +38,10 @@ A premium subscription-based web app helping Gen-Z users make money online using
 
 ### Auth & Payments
 - **Clerk** - Authentication
-- **Stripe** - Subscriptions
+- **Multi-Chain Crypto** - Direct Wallet Payments (SOL, ETH, BTC, Base)
 
 ### AI & Services
-- **Claude API** - AI mentor
+- **Google Gemini 1.5 Flash** - AI mentor chatbot
 - **OpenAI API** - Content generation
 - **Discord.js** - Community integration
 - **Resend** - Emails
@@ -145,9 +145,8 @@ stack-app/
 - `POST /api/user/save-resource` - Save resource
 - `POST /api/user/complete-module` - Complete module
 
-### Subscription
-- `POST /api/subscription/create-session` - Create Stripe session
-- `POST /api/subscription/webhook` - Stripe webhook
+### Subscription & Payments
+- `POST /api/crypto/submit-transaction` - Submit manual payment proof
 
 ## Deployment
 

@@ -691,7 +691,7 @@ fun MentorScreen() {
     var message by remember { mutableStateOf("") }
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("AI Mentor", fontSize = 28.sp, fontWeight = FontWeight.Black, color = GoldPrimary)
-        Text("Powered by Claude 3.5 Sonnet", color = TextSecondary, fontSize = 12.sp)
+        Text("Powered by Gemini 1.5 Flash", color = TextSecondary, fontSize = 12.sp)
         Spacer(modifier = Modifier.height(24.dp))
         Card(modifier = Modifier.weight(1f).fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = BgSecondary), border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor), shape = RoundedCornerShape(24.dp)) {
             Box(modifier = Modifier.fillMaxSize().padding(24.dp)) {

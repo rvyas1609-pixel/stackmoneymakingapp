@@ -150,12 +150,13 @@ export interface StackConfig {
     notifyOnWeeklyDigest: boolean;
   };
   integrations: {
-    clerkKey: string;
-    stripeKey: string;
-    claudeKey: string;
+    geminiKey: string;
     openaiKey: string;
     discordToken: string;
     resendKey: string;
+    walletSol: string;
+    walletEth: string;
+    walletBtc: string;
   };
   socials: {
     id: string;
@@ -188,9 +189,9 @@ const DEFAULT_CONFIG: StackConfig = {
   branding: {
     appName: 'STACK',
     tagline: 'Your AI Money Operating System',
-    primaryColor: '#C8A869',
-    accentColor: '#34C792',
-    backgroundColor: '#0C0C0B',
+    primaryColor: '#d4af37',
+    accentColor: '#e6c547',
+    backgroundColor: '#0a1428',
     fontFamily: 'serif',
     logoEmoji: '💰',
     darkModeDefault: true,
@@ -337,7 +338,7 @@ const DEFAULT_CONFIG: StackConfig = {
         type: 'framework',
         tier: 'elite',
         downloadUrl: '#',
-        description: 'Pre-built automation scenario blueprint that syncs Stripe payments to Discord roles instantly.'
+        description: 'Pre-built automation scenario blueprint that syncs Crypto payments to Discord roles instantly.'
       },
       {
         id: 'res-3',
@@ -469,12 +470,13 @@ const DEFAULT_CONFIG: StackConfig = {
     notifyOnWeeklyDigest: false,
   },
   integrations: {
-    clerkKey: 'pk_live_clerk_5893a20d4efb',
-    stripeKey: 'sk_live_stripe_994a320ce11b',
-    claudeKey: 'sk-ant-api03-2483a90f',
+    geminiKey: '',
     openaiKey: 'sk-proj-948f2920ce',
     discordToken: 'MTE5MjM4NDkwMTIzNDA',
     resendKey: 're_829fa20b41ce994',
+    walletSol: 'A6J3diQzGfGFtGhwX2mnY2UMjbj571m8zvgv6Nc1LW9A',
+    walletEth: '0xe8BD02dD2D361E0F189DC3607677758AA4d7D7c4',
+    walletBtc: 'bc1p04xmaq3y4e9vff5llfpghvkgrygkav4tfxzm4qfw6gfsn6rssg2qudlcfq',
   },
   socials: [
     { id: 'soc-1', platform: 'YouTube', url: 'https://youtube.com/stackapp', icon: '🎥', visible: true },
@@ -2536,7 +2538,9 @@ ${config.content.playbooks.map(p => `- ${p.title} (${p.estimatedEarnings})`).joi
 
               {[
                 { label: 'Clerk Auth Key', key: 'clerkKey', status: true },
-                { label: 'Stripe Payments Private Key', key: 'stripeKey', status: true },
+                { label: 'Solana Wallet Address', key: 'walletSol', status: true },
+                { label: 'Ethereum Wallet Address', key: 'walletEth', status: true },
+                { label: 'Bitcoin Wallet Address', key: 'walletBtc', status: true },
                 { label: 'Anthropic Claude SDK API Key', key: 'claudeKey', status: true },
                 { label: 'OpenAI API Key', key: 'openaiKey', status: true },
                 { label: 'Discord Bot Client Token', key: 'discordToken', status: false },

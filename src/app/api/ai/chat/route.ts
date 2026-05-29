@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       data: {
         content: response,
-        model: 'claude-3',
+        model: 'gemini-1.5-flash',
         stop_reason: 'end_turn',
       },
     });
