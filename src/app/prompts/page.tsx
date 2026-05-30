@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Filter, Sparkles, ChevronRight, Zap } from "lucide-react";
+import { Search } from "lucide-react";
 import { PromptCard } from "@/components/prompts/PromptCard";
 import { useRouter } from "next/navigation";
 import { UpgradeGate } from "@/components/UpgradeGate";

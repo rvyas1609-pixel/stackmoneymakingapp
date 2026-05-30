@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Filter, Sparkles, X, Layout, FileText, FileCode, CheckCircle2 } from "lucide-react";
+import { Search, Sparkles, X, FileText } from "lucide-react";
 import { ResourceCard } from "@/components/resources/ResourceCard";
 import { Card } from "@/components/ui/Card";
 

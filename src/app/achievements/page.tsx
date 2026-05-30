@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { motion } from "framer-motion";
-import { Trophy, Star, Zap, Target, Lock, ChevronRight, TrendingUp, History, Shield } from "lucide-react";
+import { Trophy, Zap, History, Shield, TrendingUp, ChevronRight } from "lucide-react";
 
 const levelTitles: Record<number, string> = {
   1: "Hustler",

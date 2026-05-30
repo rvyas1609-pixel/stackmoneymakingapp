@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Filter, Clock, BarChart, Lock, ChevronRight, Sparkles } from "lucide-react";
+import { Search, Clock, BarChart, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { UpgradeGate } from "@/components/UpgradeGate";
 

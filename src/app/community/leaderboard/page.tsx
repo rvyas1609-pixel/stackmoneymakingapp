@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card } from "@/components/ui/Card";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { Trophy, Zap, Flame, DollarSign, ArrowUpRight } from "lucide-react";
+import { Zap, Flame, DollarSign, ArrowUpRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 

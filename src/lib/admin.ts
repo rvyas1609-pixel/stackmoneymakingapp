@@ -1,9 +1,8 @@
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "./prisma";
-import { NextResponse } from "next/server";
 
 export async function requireAdmin() {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   const user = await prisma.user.findUnique({

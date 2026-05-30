@@ -5,7 +5,9 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const user = await getOrCreateUser();
+
     if (!user) {
+      console.log("[USER_GET] No user session found");
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -15,12 +17,14 @@ export async function GET() {
       _sum: { amount: true },
     });
 
+    console.log("[USER_GET] Successfully fetched profile for:", user.email);
+
     return NextResponse.json({
       ...user,
       totalIncome: incomeAggregation._sum.amount || 0,
     });
-  } catch (error) {
-    console.error("[USER_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+  } catch (error: any) {
+    console.error("[USER_GET_ERROR]", error.message);
+    return new NextResponse("Internal Server Error: " + error.message, { status: 500 });
   }
 }

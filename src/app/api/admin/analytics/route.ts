@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
-import { aiUsageStats } from "../../ai-coach/route";
+import { aiUsageStats } from "@/lib/analytics";
 
 export async function GET() {
   try {

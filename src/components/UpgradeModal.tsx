@@ -101,7 +101,7 @@ export const UpgradeModal = ({ onClose }: UpgradeModalProps) => {
 
               <div className="p-4 rounded-2xl bg-gold/5 border border-gold/20">
                 <div className="flex items-center gap-2 text-gold mb-1">
-                  <ti-clock size={16} />
+                  <Clock size={16} />
                   <span className="text-[10px] font-black uppercase tracking-[0.2em]">Limited Time Offer</span>
                 </div>
                 <p className="text-sm font-bold text-white">Price increases in:</p>

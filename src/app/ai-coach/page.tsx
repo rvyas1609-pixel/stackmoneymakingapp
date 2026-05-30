@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, Sparkles, Copy, Trash2, Target, Zap, Clock } from "lucide-react";
+import { Send, Bot, User, Copy, Trash2, Target, Zap, Clock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { UpgradeGate } from "@/components/UpgradeGate";
