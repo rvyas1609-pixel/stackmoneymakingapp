@@ -12,46 +12,62 @@ datasource db {
 
 // User with authentication
 model User {
-  id            String    @id @default(cuid())
-  clerkId       String    @unique
-  email         String    @unique
-  username      String?
-  profileImage  String?
-  displayName   String?
-  
+  id              String    @id @default(cuid())
+  clerkId         String    @unique
+  email           String    @unique
+  username        String?
+  profileImage    String?
+  displayName     String?
+  passwordHash    String?   // Added for secure custom auth storage
+  isAdmin         Boolean   @default(false) // Added for admin privileges
+
   // Onboarding
-  primarySkill  String?
-  weeklyHours   Int?
-  incomeGoal    Int?
+  primarySkill    String?
+  weeklyHours     Int?
+  incomeGoal      Int?      @default(5000)
+
+  // Stats & Gamification
+  xp              Int       @default(0)
+  level           Int       @default(1)
+  levelTitle      String    @default("Hustler")
+  streakDays      Int       @default(0)
+  longestStreak   Int       @default(0)
+  lastActive      DateTime? @default(now())
+  totalIncome     Float     @default(0)
+
+  // Referrals
+  referralCode    String    @unique
+  referredById    String?
+  referredBy      User?     @relation("ReferralRelation", fields: [referredById], references: [id])
+  referrals       User[]    @relation("ReferralRelation")
+  referralBonuses ReferralBonus[]
   
   // Subscription
-  subscription  Subscription?
-  subscriptionId String?
+  subscription    Subscription?
+  subscriptionId  String?
   
   // Preferences
-  preferences   UserPreferences?
+  preferences     UserPreferences?
   
-  // Content
-  savedPrompts  SavedPrompt[]
-  savedResources SavedResource[]
+  // Content & Progress
+  savedPrompts     SavedPrompt[]
+  savedResources   SavedResource[]
   completedModules CompletedModule[]
-  
+  playbookProgress PlaybookProgress[]
+  promptUsage      PromptUsage[]
+
   // Community
   communityProfile CommunityProfile?
-  messages      Message[]
-  achievements  Achievement[]
-  incomeEntries IncomeEntry[]
+  messages        Message[]
+  achievements    UserAchievement[]
+  incomeEntries   IncomeEntry[]
   aiConversations AIConversation[]
-  xp            Int @default(0)
-  level         Int @default(1)
-  streakDays    Int @default(0)
-  lastActive    DateTime?
 
   // Bookmarks & favorites
   favoriteHustles String[]
   
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model UserPreferences {
@@ -77,13 +93,14 @@ model Subscription {
   userId        String    @unique
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  paymentProvider String?   @default("coinbase") // coinbase, manual, etc.
-  paymentId       String?   @unique // Crypto charge ID
+  paymentProvider String?   @default("manual_wallet")
+  paymentId       String?   @unique
   tier            String    @default("free") // free, starter, pro, elite
   
-  status        String    @default("active") // active, completed, expired
+  status        String    @default("active") // active, pending_verification, canceled, expired
   currentPeriodStart DateTime?
   currentPeriodEnd DateTime?
+  expiresAt     DateTime?
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -91,44 +108,63 @@ model Subscription {
 
 // Content: Playbooks
 model Playbook {
-  id            String    @id @default(cuid())
-  title         String
-  description   String    @db.Text
-  slug          String    @unique
+  id                String    @id @default(cuid())
+  title             String
+  description       String    @db.Text
+  slug              String    @unique
   
-  icon          String?
-  category      String
-  difficulty    String    @default("Beginner") // Beginner, Intermediate, Advanced
+  icon              String?
+  category          String
+  difficulty        String    @default("Beginner") // Beginner, Intermediate, Advanced
   
-  range         String?   // "$500-1000/mo"
-  timeCommitment String?  // "5 hrs/week"
+  incomeRange       String?   // "$500-1000/mo"
+  timeCommitment    String?   // "5 hrs/week"
+  timeToFirstIncome String?   // "14 days"
   
-  content       String    @db.Text
-  steps         Step[]
-  tools         String[]
+  content           String    @db.Text
+  steps             PlaybookStep[]
+  tools             String[]
   
-  order         Int       @default(0)
-  published     Boolean   @default(false)
-  tier          String    @default("starter") // starter, pro, elite
+  order             Int       @default(0)
+  published         Boolean   @default(false)
+  tier              String    @default("starter") // starter, pro, elite
   
-  views         Int       @default(0)
-  saved         Int       @default(0)
+  views             Int       @default(0)
+  saved             Int       @default(0)
   
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  progress          PlaybookProgress[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
-model Step {
-  id            String    @id @default(cuid())
-  playbookId    String
-  playbook      Playbook  @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+model PlaybookStep {
+  id          String   @id @default(cuid())
+  playbookId  String
+  playbook    Playbook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
   
-  number        Int
-  heading       String
-  body          String    @db.Text
+  title       String
+  content     String   @db.Text
+  order       Int
+  videoUrl    String?
+  checklist   Json?    // Array of string tasks
   
-  order         Int
-  createdAt     DateTime  @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model PlaybookProgress {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playbookId     String
+  playbook       Playbook @relation(fields: [playbookId], references: [id], onDelete: Cascade)
+
+  completedSteps Int      @default(0)
+  isCompleted    Boolean  @default(false)
+
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, playbookId])
 }
 
 // Content: Prompts
@@ -136,12 +172,13 @@ model PromptPack {
   id            String    @id @default(cuid())
   title         String
   description   String    @db.Text
-  
+  category      String
+
   prompts       Prompt[]
   
   tier          String    @default("starter")
-  month         Int
-  year          Int
+  month         Int?
+  year          Int?
   
   published     Boolean   @default(false)
   
@@ -159,11 +196,13 @@ model Prompt {
   category      String    // copywriting, video, marketing, automation, etc.
   
   tags          String[]
+  useCase       String?
   useCount      Int       @default(0)
   rating        Float     @default(0)
   
   savedBy       SavedPrompt[]
-  
+  usages        PromptUsage[]
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -181,6 +220,15 @@ model SavedPrompt {
   @@unique([userId, promptId])
 }
 
+model PromptUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  promptId  String
+  prompt    Prompt   @relation(fields: [promptId], references: [id])
+  createdAt DateTime @default(now())
+}
+
 // Content: Resources
 model Resource {
   id            String    @id @default(cuid())
@@ -189,6 +237,7 @@ model Resource {
   category      String    // templates, scripts, frameworks, etc.
   
   downloadUrl   String?
+  fileUrl       String?
   content       String?   @db.Text
   
   type          String    // notion, figma, pdf, etc.
@@ -220,16 +269,18 @@ model SavedResource {
 }
 
 // AI Tools Database
-model AITool {
+model Tool {
   id            String    @id @default(cuid())
   name          String    @unique
+  url           String
   slug          String    @unique
   description   String    @db.Text
   
   logo          String?
-  website       String?
-  pricing       String
+  pricingModel  String    // free, freemium, paid
+  monthlyPrice  String?
   
+  category      String
   categories    String[]
   incomeAngle   String?   @db.Text
   
@@ -238,7 +289,8 @@ model AITool {
   
   rating        Float     @default(0)
   reviews       Int       @default(0)
-  
+  difficulty    String    @default("Beginner")
+
   published     Boolean   @default(false)
   
   createdAt     DateTime  @default(now())
@@ -254,7 +306,8 @@ model Roadmap {
   
   duration      Int       // days
   difficulty    String
-  
+  targetIncome  Int?
+
   milestones    Milestone[]
   
   published     Boolean   @default(false)
@@ -325,19 +378,25 @@ model Message {
   updatedAt     DateTime  @updatedAt
 }
 
-model Achievement {
+model UserAchievement {
   id            String    @id @default(cuid())
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  achievementId String
+  unlockedAt    DateTime  @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+model Achievement {
+  id            String    @id @default(cuid())
   title         String
   description   String
   icon          String
   xpReward      Int
-  
-  unlockedAt    DateTime  @default(now())
-  
-  @@unique([userId, title])
+
+  createdAt     DateTime  @default(now())
 }
 
 // Income Tracking
@@ -346,10 +405,12 @@ model IncomeEntry {
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  methodId      String?
+  source        String?
+  playbookId    String?
   amount        Float
-  date          DateTime
+  date          DateTime  @default(now())
   notes         String?
+  isPublic      Boolean   @default(true)
 
   createdAt     DateTime  @default(now())
 }
@@ -371,9 +432,18 @@ model Event {
   id            String    @id @default(cuid())
   userId        String?
   eventType     String    // page_view, prompt_used, resource_downloaded, etc.
-  metadata      String    @db.Json
+  metadata      Json
   
   createdAt     DateTime  @default(now())
+}
+
+model ReferralBonus {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  reason      String
+  amount      Int      // XP or Credits
+  createdAt   DateTime @default(now())
 }
 
 model AnalyticsDashboard {

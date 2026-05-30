@@ -1,45 +1,44 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin";
+import { aiUsageStats } from "../../ai-coach/route";
 
-// Mock analytics endpoint
 export async function GET() {
   try {
-    const analytics = {
-      metrics: {
-        totalUsers: 5284,
-        activeUsers: 3421,
-        newUsersThisMonth: 892,
-        mrr: 124500,
-        arr: 1494000,
-        churnRate: 3.2,
-        avgLTV: 450,
-        avgCAC: 35,
-      },
-      subscriptions: {
-        free: 2100,
-        starter: 1850,
-        pro: 1000,
-        elite: 334,
-      },
-      features: {
-        promptsSaved: 15420,
-        resourcesDownloaded: 8932,
-        playbooksCompleted: 3421,
-        averageXP: 3240,
-      },
-      growth: [
-        { date: '2024-01-01', users: 1200, revenue: 8400 },
-        { date: '2024-01-15', users: 2150, revenue: 18900 },
-        { date: '2024-02-01', users: 3100, revenue: 32500 },
-        { date: '2024-02-15', users: 4200, revenue: 58200 },
-        { date: '2024-03-01', users: 5284, revenue: 124500 },
-      ],
-    };
+    await requireAdmin();
 
-    return NextResponse.json({ data: analytics });
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch analytics' },
-      { status: 500 }
-    );
+    const [totalUsers, tierCounts, last30DaysUsers, topPlaybooks] = await Promise.all([
+      prisma.user.count(),
+      prisma.subscription.groupBy({
+        by: ['tier'],
+        _count: true,
+      }),
+      prisma.user.count({
+        where: { createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }
+      }),
+      prisma.playbook.findMany({
+        take: 5,
+        orderBy: { views: 'desc' },
+        select: { title: true, views: true }
+      })
+    ]);
+
+    // Calculate MRR (Simplified)
+    const prices = { free: 0, starter: 19, pro: 49, elite: 149 };
+    const mrr = tierCounts.reduce((acc, curr) => {
+      const price = prices[curr.tier as keyof typeof prices] || 0;
+      return acc + (price * curr._count);
+    }, 0);
+
+    return NextResponse.json({
+      totalUsers,
+      newSignups: last30DaysUsers,
+      mrr,
+      aiCoachUsage: aiUsageStats.totalRequests,
+      tierDistribution: tierCounts,
+      topPlaybooks
+    });
+  } catch (error: any) {
+    return new NextResponse(error.message, { status: 403 });
   }
 }

@@ -1,67 +1,71 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const skip = parseInt(searchParams.get('skip') || '0')
-    const tier = searchParams.get('tier')
-
-    let where: any = { published: true }
-    if (tier) where.tier = tier
-
+    await requireAdmin();
     const playbooks = await prisma.playbook.findMany({
-      where,
-      skip,
-      take: 20,
-      orderBy: { createdAt: 'desc' },
       include: { steps: true },
-    })
-
-    const total = await prisma.playbook.count({ where })
-
-    return NextResponse.json({
-      data: playbooks,
-      pagination: { total, skip },
-    })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch playbooks' },
-      { status: 500 }
-    )
+      orderBy: { order: 'asc' }
+    });
+    return NextResponse.json(playbooks);
+  } catch (error: any) {
+    return new NextResponse(error.message, { status: 403 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const { title, description, slug, icon, category, difficulty, range, timeCommitment, content, steps, tools, tier } = await request.json()
-
+    await requireAdmin();
+    const data = await req.json();
     const playbook = await prisma.playbook.create({
       data: {
-        title,
-        description,
-        slug,
-        icon,
-        category,
-        difficulty,
-        range,
-        timeCommitment,
-        content,
-        tools: tools || [],
-        tier: tier || 'starter',
-        published: false,
+        ...data,
         steps: {
-          create: steps || [],
-        },
-      },
-      include: { steps: true },
-    })
+          create: data.steps || []
+        }
+      }
+    });
+    return NextResponse.json(playbook);
+  } catch (error: any) {
+    return new NextResponse(error.message, { status: 400 });
+  }
+}
 
-    return NextResponse.json({ data: playbook }, { status: 201 })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to create playbook' },
-      { status: 500 }
-    )
+export async function PUT(req: Request) {
+  try {
+    await requireAdmin();
+    const { id, steps, ...data } = await req.json();
+
+    // Simple update: delete old steps and create new ones if provided
+    if (steps) {
+      await prisma.step.deleteMany({ where: { playbookId: id } });
+    }
+
+    const updated = await prisma.playbook.update({
+      where: { id },
+      data: {
+        ...data,
+        steps: steps ? { create: steps } : undefined
+      }
+    });
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    return new NextResponse(error.message, { status: 400 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    await requireAdmin();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) return new NextResponse("ID required", { status: 400 });
+
+    await prisma.playbook.delete({ where: { id } });
+    return new NextResponse("Deleted", { status: 200 });
+  } catch (error: any) {
+    return new NextResponse(error.message, { status: 400 });
   }
 }

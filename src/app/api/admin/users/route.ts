@@ -1,70 +1,63 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getUserFromRequest } from '@/lib/auth'
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin";
+import bcrypt from "bcryptjs";
 
-export async function GET(request: NextRequest) {
+export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const skip = parseInt(searchParams.get('skip') || '0')
+    await requireAdmin();
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = 20;
+    const skip = (page - 1) * limit;
 
-    const users = await prisma.user.findMany({
-      include: { subscription: true },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: 50,
-    })
-
-    const total = await prisma.user.count()
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        skip,
+        take: limit,
+        include: { subscription: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.user.count(),
+    ]);
 
     return NextResponse.json({
-      data: users,
-      pagination: { total, skip },
-    })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch users' },
-      { status: 500 }
-    )
+      users,
+      pagination: {
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error: any) {
+    return new NextResponse(error.message, { status: 403 });
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const userId = await getUserFromRequest(request)
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+    await requireAdmin();
+    const body = await req.json();
+    const { email, username, password, isAdmin } = body;
 
-    const { targetUserId, subscription } = await request.json()
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(password, salt);
 
-    const user = await prisma.user.findUnique({
-      where: { id: targetUserId },
-      include: { subscription: true },
-    })
+    const user = await prisma.user.create({
+      data: {
+        clerkId: `admin_created_${Date.now()}`,
+        email,
+        username,
+        passwordHash,
+        isAdmin: !!isAdmin,
+        subscription: {
+          create: { tier: "free", status: "active" },
+        },
+      },
+    });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
-    }
-
-    if (user.subscription) {
-      await prisma.subscription.update({
-        where: { id: user.subscription.id },
-        data: subscription,
-      })
-    }
-
-    return NextResponse.json({ message: 'User updated' })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to update user' },
-      { status: 500 }
-    )
+    return NextResponse.json(user);
+  } catch (error: any) {
+    return new NextResponse(error.message, { status: 400 });
   }
 }

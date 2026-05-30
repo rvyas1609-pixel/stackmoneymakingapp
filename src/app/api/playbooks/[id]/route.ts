@@ -1,84 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getUserFromRequest } from '@/lib/auth'
+import { NextResponse } from "next/server";
+import { getOrCreateUser } from "@/lib/user";
+import { prisma } from "@/lib/prisma";
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
-    const playbook = await prisma.playbook.findUnique({
-      where: { id: params.id },
-      include: { steps: true },
-    })
+    const user = await getOrCreateUser();
+    if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
-    if (!playbook || !playbook.published) {
-      return NextResponse.json(
-        { error: 'Playbook not found' },
-        { status: 404 }
-      )
-    }
+    const { completedSteps } = await req.json();
 
-    return NextResponse.json({ data: playbook })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch playbook' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const userId = await getUserFromRequest(request)
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    const data = await request.json()
-    const { title, description, published, tier } = data
-
-    const playbook = await prisma.playbook.update({
-      where: { id: params.id },
-      data: {
-        ...(title && { title }),
-        ...(description && { description }),
-        ...(published !== undefined && { published }),
-        ...(tier && { tier }),
+    const progress = await prisma.playbookProgress.upsert({
+      where: {
+        userId_playbookId: {
+          userId: user.id,
+          playbookId: params.id,
+        },
       },
-      include: { steps: true },
-    })
+      update: {
+        completedSteps: completedSteps,
+        isCompleted: false, // In a real app, check if steps === total
+      },
+      create: {
+        userId: user.id,
+        playbookId: params.id,
+        completedSteps: completedSteps,
+      },
+    });
 
-    return NextResponse.json({ data: playbook })
+    // Award XP if completed a step (+50 XP)
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { xp: { increment: 50 } },
+    });
+
+    return NextResponse.json(progress);
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to update playbook' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const userId = await getUserFromRequest(request)
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    await prisma.playbook.delete({
-      where: { id: params.id },
-    })
-
-    return NextResponse.json({ message: 'Playbook deleted' })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to delete playbook' },
-      { status: 500 }
-    )
+    console.error("[PLAYBOOK_PROGRESS_PUT]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

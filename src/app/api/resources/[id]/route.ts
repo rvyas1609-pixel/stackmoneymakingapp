@@ -1,118 +1,51 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { getUserFromRequest } from '@/lib/auth'
+import { NextResponse } from "next/server";
+import { getOrCreateUser } from "@/lib/user";
+import { prisma } from "@/lib/prisma";
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
+    const user = await getOrCreateUser();
+    if (!user) return new NextResponse("Unauthorized", { status: 401 });
+
     const resource = await prisma.resource.findUnique({
       where: { id: params.id },
-    })
+    });
 
-    if (!resource || !resource.published) {
-      return NextResponse.json(
-        { error: 'Resource not found' },
-        { status: 404 }
-      )
+    if (!resource) return new NextResponse("Not Found", { status: 404 });
+
+    // Check tier
+    const tiers = { free: 0, starter: 1, pro: 2, elite: 3 };
+    const userTier = user.subscription?.tier || "free";
+    
+    if (tiers[userTier as keyof typeof tiers] < tiers[resource.tier as keyof typeof tiers]) {
+      return new NextResponse("Forbidden", { status: 403 });
     }
 
-    // Increment downloads
+    return NextResponse.json(resource);
+  } catch (error) {
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+export async function POST(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const user = await getOrCreateUser();
+    if (!user) return new NextResponse("Unauthorized", { status: 401 });
+
+    // Increment download count and track
     await prisma.resource.update({
       where: { id: params.id },
       data: { downloads: { increment: 1 } },
-    })
+    });
 
-    return NextResponse.json({ data: resource })
+    // Award XP (+15 XP per download)
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { xp: { increment: 15 } },
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch resource' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const userId = await getUserFromRequest(request)
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    const { action } = await request.json()
-
-    if (action === 'save') {
-      await prisma.savedResource.create({
-        data: {
-          userId,
-          resourceId: params.id,
-        },
-      }).catch(() => null)
-
-      return NextResponse.json({ data: { saved: true } })
-    }
-
-    return NextResponse.json(
-      { error: 'Invalid action' },
-      { status: 400 }
-    )
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to process request' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const userId = await getUserFromRequest(request)
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    const data = await request.json()
-
-    const resource = await prisma.resource.update({
-      where: { id: params.id },
-      data: { ...data },
-    })
-
-    return NextResponse.json({ data: resource })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to update resource' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const userId = await getUserFromRequest(request)
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    await prisma.resource.delete({
-      where: { id: params.id },
-    })
-
-    return NextResponse.json({ message: 'Resource deleted' })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to delete resource' },
-      { status: 500 }
-    )
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }
