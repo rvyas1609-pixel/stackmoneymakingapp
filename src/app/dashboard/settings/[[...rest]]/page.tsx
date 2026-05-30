@@ -46,6 +46,8 @@ export default function SettingsPage() {
           <div className="lg:col-span-3">
              <Card className="p-0 border-none bg-transparent">
                 <UserProfile
+                  path="/dashboard/settings"
+                  routing="path"
                   appearance={{
                     elements: {
                       rootBox: "w-full",
