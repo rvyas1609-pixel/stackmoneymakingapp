@@ -1,112 +1,185 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card } from "@/components/ui/Card";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { Copy, Check, Sparkles, Filter } from "lucide-react";
-import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Sparkles, Filter, Bookmark, Copy, Play, Zap, Info } from "lucide-react";
+import { PromptCard } from "@/components/prompts/PromptCard";
+import { useRouter } from "next/navigation";
+import { UpgradeGate } from "@/components/UpgradeGate";
+import { Card } from "@/components/ui/Card";
+
+const categories = [
+  "All",
+  "Copywriting",
+  "YouTube Scripts",
+  "Email Marketing",
+  "Social Media",
+  "Sales",
+  "Coding",
+  "Business Plans",
+  "Research",
+  "SEO",
+  "Cold Outreach",
+  "Personal Brand"
+];
 
 export default function PromptsPage() {
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState("All");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const { data: packs, isLoading } = useQuery({
-    queryKey: ["prompts", activeCategory],
+    queryKey: ["prompts", activeCategory, debouncedSearch],
     queryFn: async () => {
-      const url = activeCategory === "All" ? "/api/prompts" : `/api/prompts?category=${activeCategory.toLowerCase()}`;
-      const { data } = await api.get(url);
-      return data;
+      const url = activeCategory === "All" ? "/api/prompts" : `/api/prompts?category=${activeCategory}`;
+      return (await api.get(url)).data;
     },
   });
 
-  const handleCopy = (content: string, id: string) => {
-    navigator.clipboard.writeText(content);
-    setCopiedId(id);
-    toast.success("Prompt copied to clipboard!");
-    setTimeout(() => setCopiedId(null), 2000);
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => (await api.get("/api/user")).data,
+  });
+
+  const handleTryCoach = (content: string) => {
+    localStorage.setItem("stack_coach_prefill", content);
+    router.push("/dashboard/ai-coach");
   };
 
-  const categories = ["All", "Copywriting", "Video", "Marketing", "Automation", "Images"];
+  const allPrompts = packs?.flatMap((p: any) => p.prompts) || [];
+  const filteredPrompts = allPrompts.filter((p: any) =>
+    p.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    p.content.toLowerCase().includes(debouncedSearch.toLowerCase())
+  );
 
   return (
     <DashboardLayout>
-      <div className="space-y-10">
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <h1 className="text-4xl font-black text-white mb-2 font-serif uppercase tracking-tight">Prompt Vault</h1>
-            <p className="text-text-secondary font-medium">1,000+ elite AI prompts to automate your income.</p>
-          </div>
+      <div className="space-y-12">
+        <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl">
+             <h1 className="text-5xl md:text-7xl font-black text-white mb-4 font-serif uppercase tracking-tight italic leading-none">
+                Prompt <span className="text-gradient">Vault</span>
+             </h1>
+             <p className="text-lg text-text-secondary font-medium leading-relaxed italic opacity-80 tracking-widest uppercase text-[10px]">
+                Proprietary algorithmic triggers for maximal digital leverage. 1000+ elite presets.
+             </p>
+          </motion.div>
 
-          <div className="flex items-center gap-3">
-             {categories.map(cat => (
-               <button
-                 key={cat}
-                 onClick={() => setActiveCategory(cat)}
-                 className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                   activeCategory === cat ? "bg-gold text-bg-primary" : "bg-bg-card border border-border text-text-secondary hover:text-white"
-                 }`}
-               >
-                 {cat}
-               </button>
-             ))}
+          <div className="relative w-full xl:w-[450px]">
+             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-text-muted" size={24} />
+             <input
+               type="text"
+               value={search}
+               onChange={(e) => setSearch(e.target.value)}
+               placeholder="Search triggers by keyword..."
+               className="w-full bg-bg-card border border-border rounded-2xl pl-16 pr-6 py-6 text-sm text-white focus:border-gold outline-none transition-all shadow-inner"
+             />
           </div>
         </header>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-48 rounded-3xl bg-bg-card animate-pulse border border-border" />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-12">
-            {packs?.map((pack: any) => (
-              <div key={pack.id} className="space-y-6">
+        {/* Categories Bar */}
+        <div className="flex bg-bg-card p-1.5 rounded-2xl border border-border overflow-x-auto no-scrollbar scroll-smooth">
+           {categories.map((cat) => (
+             <button
+               key={cat}
+               onClick={() => setActiveCategory(cat)}
+               className={`px-10 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap ${
+                 activeCategory === cat ? "bg-gold text-bg-primary shadow-gold-glow" : "text-text-muted hover:text-white"
+               }`}
+             >
+               {cat}
+             </button>
+           ))}
+        </div>
+
+        {/* Featured Prompt of the Day */}
+        {!isLoading && !debouncedSearch && activeCategory === "All" && allPrompts.length > 0 && (
+          <Card className="bg-gradient-luxury border-none p-12 flex flex-col md:flex-row items-center gap-16 group overflow-hidden relative rounded-[3rem]">
+             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+             <div className="relative z-10 w-32 h-32 rounded-[2.5rem] bg-bg-primary border border-white/5 flex items-center justify-center text-6xl shadow-2xl group-hover:scale-110 transition-transform duration-1000">
+                🚀
+             </div>
+             <div className="relative z-10 flex-1 space-y-6">
                 <div className="flex items-center gap-4">
-                   <h2 className="text-xl font-black text-white uppercase tracking-wider">{pack.title}</h2>
-                   <div className="h-[1px] flex-1 bg-border" />
-                   <span className="text-[10px] font-black text-gold uppercase tracking-[0.2em]">{pack.tier} access</span>
+                   <span className="px-4 py-2 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-[0.2em] border border-white/10 backdrop-blur-md">Elite Selection</span>
+                   <div className="flex items-center gap-2 text-gold">
+                      <Sparkles size={16} fill="currentColor" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Prompt of the Day</span>
+                   </div>
                 </div>
+                <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">{allPrompts[0].title}</h2>
+                <p className="text-lg text-white/70 max-w-2xl font-medium leading-relaxed">
+                   Engineered for viral retention. This trigger uses the 'Controversial Paradox' framework to force massive engagement on LinkedIn and Twitter.
+                </p>
+                <div className="flex items-center gap-6">
+                   <button
+                     onClick={() => handleTryCoach(allPrompts[0].content)}
+                     className="px-12 py-4 rounded-2xl bg-white text-bg-primary font-black uppercase tracking-[0.2em] text-[10px] hover:shadow-2xl hover:scale-105 active:scale-95 transition-all"
+                   >
+                      Test in Coach
+                   </button>
+                   <div className="flex items-center gap-2 text-white/50 text-[10px] font-black uppercase tracking-widest">
+                      <Info size={14} />
+                      Verified 98% Output Quality
+                   </div>
+                </div>
+             </div>
+          </Card>
+        )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {pack.prompts?.map((prompt: any) => (
-                    <Card key={prompt.id} className="group relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-4">
-                        <button
-                          onClick={() => handleCopy(prompt.content, prompt.id)}
-                          className="p-2 rounded-lg bg-bg-elevated border border-border text-text-secondary hover:text-gold transition-colors"
+        {/* Prompts Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
+           {isLoading ? (
+             [...Array(9)].map((_, i) => (
+               <div key={i} className="h-96 rounded-[3rem] bg-bg-card animate-pulse border border-border" />
+             ))
+           ) : (
+             <AnimatePresence>
+                {filteredPrompts.map((p: any, idx: number) => {
+                  const userTier = user?.subscription?.tier || 'free';
+                  const tierLimits: Record<string, number> = { free: 50, starter: 300, pro: 1000, elite: 5000 };
+                  const isLocked = idx >= (tierLimits[userTier] || 50);
+
+                  return (
+                    <motion.div
+                      key={p.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: (idx % 20) * 0.02 }}
+                    >
+                      {isLocked ? (
+                        <UpgradeGate
+                          requiredTier={userTier === 'free' ? 'starter' : 'pro'}
+                          featureName={`Advanced Trigger #${idx + 1}`}
+                          userTier={userTier}
+                          preview
                         >
-                          {copiedId === prompt.id ? <Check size={16} /> : <Copy size={16} />}
-                        </button>
-                      </div>
+                           <PromptCard prompt={p} onTry={handleTryCoach} />
+                        </UpgradeGate>
+                      ) : (
+                        <PromptCard prompt={p} onTry={handleTryCoach} />
+                      )}
+                    </motion.div>
+                  );
+                })}
+             </AnimatePresence>
+           )}
+        </div>
 
-                      <div className="mb-4 flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center text-gold">
-                           <Sparkles size={16} />
-                        </div>
-                        <h3 className="font-bold text-white">{prompt.title}</h3>
-                      </div>
-
-                      <div className="bg-bg-primary/50 rounded-xl p-4 border border-border/50 text-xs font-medium text-text-secondary leading-relaxed h-24 overflow-hidden relative">
-                         <div className="absolute inset-0 bg-gradient-to-t from-bg-card/90 to-transparent" />
-                         {prompt.content}
-                      </div>
-
-                      <div className="mt-4 flex items-center gap-2">
-                         {prompt.tags?.map((tag: string) => (
-                           <span key={tag} className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded bg-bg-elevated text-text-muted">
-                              #{tag}
-                           </span>
-                         ))}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+        {!isLoading && filteredPrompts.length === 0 && (
+           <div className="text-center py-40 border border-dashed border-border rounded-[3rem] bg-bg-card/20">
+              <p className="text-2xl font-black text-white italic uppercase opacity-50 tracking-tighter">System Zero Results</p>
+           </div>
         )}
       </div>
     </DashboardLayout>

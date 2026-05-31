@@ -9,7 +9,7 @@ export async function GET() {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const tools = await prisma.aITool.findMany({
+    const tools = await prisma.tool.findMany({
       where: { published: true },
       orderBy: { rating: "desc" },
     });

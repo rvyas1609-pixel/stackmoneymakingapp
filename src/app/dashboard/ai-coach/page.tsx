@@ -1,68 +1,161 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { AICoachChat } from "@/components/dashboard/AICoachChat";
 import { Card } from "@/components/ui/Card";
-import { Lightbulb, MessageSquare, Zap, Target } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/api";
+import { motion, AnimatePresence } from "framer-motion";
+import { Send, Bot, User, Copy, Trash2, Target, Zap, Clock } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
+import { UpgradeGate } from "@/components/UpgradeGate";
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+const suggestions = [
+  "How do I start an AI content agency?",
+  "Give me a 30-day plan to make $1K/month",
+  "What AI tools do I actually need?",
+  "How do I find my first client?",
+  "Review my business idea: [Type here]"
+];
 
 export default function AICoachPage() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => (await api.get("/api/user")).data,
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem("stack_chat_history");
+    const prefill = localStorage.getItem("stack_coach_prefill");
+
+    if (saved) setMessages(JSON.parse(saved));
+    else setMessages([{ role: "assistant", content: "Hello! I'm your STACK AI Coach. I've been trained on all our playbooks and the latest AI strategies. How can I help you scale today?", timestamp: new Date().toLocaleTimeString() }]);
+
+    if (prefill) {
+       setInput(prefill);
+       localStorage.removeItem("stack_coach_prefill");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (messages.length > 0) localStorage.setItem("stack_chat_history", JSON.stringify(messages.slice(-20)));
+  }, [messages]);
+
+  const handleSend = async (text: string) => {
+    if (!text.trim() || isLoading) return;
+
+    const userMessage: Message = { role: "user", content: text, timestamp: new Date().toLocaleTimeString() };
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/ai-coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [...messages, userMessage] }),
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch");
+
+      const data = response.body;
+      if (!data) return;
+
+      const reader = data.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let assistantContent = "";
+
+      setMessages(prev => [...prev, { role: "assistant", content: "", timestamp: new Date().toLocaleTimeString() }]);
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        assistantContent += chunkValue;
+
+        setMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1].content = assistantContent;
+          return newMessages;
+        });
+      }
+    } catch (e) {
+      toast.error("Coach connection failed. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const clearChat = () => {
+    setMessages([{ role: "assistant", content: "Chat cleared. Ready for a new mission.", timestamp: new Date().toLocaleTimeString() }]);
+    localStorage.removeItem("stack_chat_history");
+  };
+
   return (
     <DashboardLayout>
-      <div className="space-y-10">
-        <header>
-          <h1 className="text-4xl font-black text-white mb-2 font-serif uppercase tracking-tight">AI Coach</h1>
-          <p className="text-text-secondary font-medium">Your 24/7 strategic partner for building your digital empire.</p>
-        </header>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-3">
-            <AICoachChat />
-          </div>
-
-          <div className="space-y-6">
-            <Card>
-              <h4 className="text-xs font-black text-gold uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                <Lightbulb size={16} />
-                Try Asking
-              </h4>
-              <div className="space-y-4">
-                {[
-                  "How do I land my first AI agency client?",
-                  "Which playbook fits my 10hr/week schedule?",
-                  "Write a cold DM script for TikTok creators.",
-                  "Explain the YouTube Automation business model.",
-                ].map((q, i) => (
-                  <button
-                    key={i}
-                    className="text-left text-xs font-bold text-text-secondary hover:text-white transition-colors p-3 rounded-xl border border-border hover:border-gold/30 w-full"
-                  >
-                    "{q}"
-                  </button>
-                ))}
+      <div className="space-y-8 max-w-6xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
+        <div className="flex flex-col md:flex-row items-center justify-between p-6 bg-bg-card/50 border border-border rounded-3xl gap-6">
+           <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                 <div className="p-2 rounded-lg bg-gold/10">
+                    <Target size={20} className="text-gold" />
+                 </div>
+                 <div>
+                    <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Monthly Goal</p>
+                    <p className="text-sm font-black text-white italic">${user?.incomeGoal?.toLocaleString() || "5,000"}</p>
+                 </div>
               </div>
-            </Card>
+           </div>
+        </div>
 
-            <Card className="bg-gradient-premium border-none text-bg-primary">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-bg-primary/20">
-                  <Target size={20} className="text-bg-primary" />
-                </div>
-                <h4 className="font-bold">Coach Memory</h4>
-              </div>
-              <p className="text-xs font-medium text-bg-primary/80 leading-relaxed">
-                I remember your goals and skills to provide personalized advice every time we chat.
-              </p>
-            </Card>
-
-            <div className="p-6 rounded-2xl border border-dashed border-border flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-bg-card flex items-center justify-center mb-4 text-text-muted">
-                <MessageSquare size={20} />
-              </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-2">History</p>
-              <p className="text-xs text-text-muted font-medium italic">No previous chats found.</p>
-            </div>
-          </div>
+        <div className="flex-1 min-h-0">
+           <UpgradeGate
+             requiredTier="pro"
+             featureName="Elite AI Coach"
+             userTier={user?.subscription?.tier || "free"}
+             preview
+           >
+              <Card className="h-full flex flex-col p-0 border-none shadow-gold-glow overflow-hidden bg-bg-card/30 backdrop-blur-md">
+                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar">
+                    {messages.map((m, i) => (
+                      <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                         <div className={`p-6 rounded-[2rem] text-sm font-medium ${m.role === 'user' ? 'bg-bg-elevated text-white' : 'bg-bg-card border border-border text-text-primary'}`}>
+                            <ReactMarkdown>{m.content}</ReactMarkdown>
+                         </div>
+                      </motion.div>
+                    ))}
+                 </div>
+                 <div className="p-6 border-t border-border">
+                    <div className="relative">
+                       <input
+                         type="text"
+                         value={input}
+                         onChange={(e) => setInput(e.target.value)}
+                         onKeyDown={(e) => e.key === 'Enter' && handleSend(input)}
+                         placeholder="Ask anything..."
+                         className="w-full bg-bg-card border border-border rounded-[2rem] px-8 py-5 text-sm text-white focus:border-gold outline-none"
+                       />
+                       <button onClick={() => handleSend(input)} className="absolute right-2 top-2 bottom-2 w-12 h-12 rounded-[1.5rem] bg-gold text-bg-primary flex items-center justify-center">
+                          <Send size={20} />
+                       </button>
+                    </div>
+                 </div>
+              </Card>
+           </UpgradeGate>
         </div>
       </div>
     </DashboardLayout>

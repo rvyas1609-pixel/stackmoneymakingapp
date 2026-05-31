@@ -29,8 +29,9 @@ const menuItems = [
   { icon: TrendingUp, label: "Income", href: "/dashboard/income" },
   { icon: Map, label: "Roadmap", href: "/dashboard/roadmap" },
   { icon: Users, label: "Community", href: "/dashboard/community" },
+  { icon: Trophy, label: "Leaderboard", href: "/dashboard/community/leaderboard" },
   { icon: Wrench, label: "Tools", href: "/dashboard/tools" },
-  { icon: Trophy, label: "Achievements", href: "/dashboard/achievements" },
+  { icon: Shield, label: "Achievements", href: "/dashboard/achievements" },
 ];
 
 export const Sidebar = () => {
