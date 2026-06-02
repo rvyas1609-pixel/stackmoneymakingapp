@@ -51,8 +51,9 @@ export default function PlaybookDetailPage() {
 
   if (!playbook) return null;
 
-  const completedSteps = 0; // Mocked
-  const progress = (completedSteps / (playbook.steps?.length || 1)) * 100;
+  const completedSteps = Object.values(checkedItems).filter(Boolean).length;
+  const totalSteps = playbook.steps?.length || 1;
+  const progress = (completedSteps / totalSteps) * 100;
 
   return (
     <DashboardLayout>

@@ -17,6 +17,7 @@ import {
   Trophy,
   Settings,
   LogOut,
+  Shield,
 } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 

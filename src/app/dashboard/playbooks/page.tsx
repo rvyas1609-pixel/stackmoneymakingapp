@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Clock, BarChart, ChevronRight, Filter, Star, Info } from "lucide-react";
+import { Search, Clock, BarChart, ChevronRight, Filter, Star } from "lucide-react";
 import Link from "next/link";
 import { UpgradeGate } from "@/components/UpgradeGate";
 
@@ -15,7 +15,7 @@ export default function PlaybooksPage() {
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
 
-  const { data: playbooks, isLoading, isError } = useQuery({
+  const { data: playbooks, isLoading } = useQuery({
     queryKey: ["playbooks"],
     queryFn: async () => (await api.get("/api/playbooks")).data,
   });
@@ -49,14 +49,13 @@ export default function PlaybooksPage() {
   return (
     <DashboardLayout>
       <div className="space-y-12">
-        {/* Header Section */}
         <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
             <h1 className="text-5xl md:text-7xl font-black text-white mb-4 font-serif uppercase tracking-tight italic">
               Income <span className="text-gradient">Playbooks</span>
             </h1>
             <p className="text-lg text-text-secondary font-medium leading-relaxed">
-               Access our proprietary database of 65+ multi-chain money-making strategies. Updated every single Monday.
+               Access our proprietary database of 65+ multi-chain money-making strategies. Updated every Monday.
             </p>
           </motion.div>
 
@@ -77,7 +76,6 @@ export default function PlaybooksPage() {
           </div>
         </header>
 
-        {/* Filter Bar */}
         <div className="flex bg-bg-card p-1.5 rounded-2xl border border-border overflow-x-auto no-scrollbar scroll-smooth">
            {categories.map((c) => (
              <button
@@ -92,17 +90,11 @@ export default function PlaybooksPage() {
            ))}
         </div>
 
-        {/* Playbooks Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
            {isLoading ? (
              [...Array(9)].map((_, i) => (
                <div key={i} className="h-[450px] rounded-[3rem] bg-bg-card animate-pulse border border-border" />
              ))
-           ) : isError ? (
-             <div className="col-span-full py-20 text-center glass-elevated rounded-[3rem]">
-                <h3 className="text-2xl font-bold text-red-400 mb-4">API Synchronization Error</h3>
-                <p className="text-text-secondary">Unable to fetch playbooks from your Supabase cluster.</p>
-             </div>
            ) : (
              <AnimatePresence>
                 {filtered?.map((playbook: any, idx: number) => (
@@ -129,13 +121,7 @@ export default function PlaybooksPage() {
                                     {difficultyDots(playbook.difficulty)}
                                  </div>
                               </div>
-                              {playbook.order === 1 && (
-                                <div className="absolute -left-14 top-8 bg-white text-bg-primary px-16 py-1.5 rotate-[-45deg] text-[10px] font-black uppercase tracking-[0.3em] shadow-2xl z-10">
-                                   TRENDING
-                                </div>
-                              )}
                               <div className="absolute inset-0 opacity-20 group-hover:scale-125 transition-transform duration-1000 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-                              <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-bg-card to-transparent" />
                            </div>
 
                            <div className="p-10 pt-4 flex-1 flex flex-col">
@@ -151,11 +137,7 @@ export default function PlaybooksPage() {
                                  <div className="flex items-center gap-6">
                                     <div className="flex items-center gap-2 text-text-muted">
                                        <Clock size={16} className="text-gold" />
-                                       <span className="text-[10px] font-black uppercase tracking-widest">{playbook.timeToFirstIncome}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-text-muted">
-                                       <Info size={16} className="text-gold" />
-                                       <span className="text-[10px] font-black uppercase tracking-widest">{playbook.steps?.length || 5} Steps</span>
+                                       <span className="text-[10px] font-black uppercase tracking-widest">{playbook.timeToFirstIncome || "14 Days"}</span>
                                     </div>
                                  </div>
                                  <div className="w-12 h-12 rounded-2xl bg-bg-elevated border border-border flex items-center justify-center text-white group-hover:bg-gold group-hover:text-bg-primary transition-all shadow-lg group-hover:shadow-gold-glow">
@@ -171,15 +153,6 @@ export default function PlaybooksPage() {
              </AnimatePresence>
            )}
         </div>
-
-        {/* Empty State */}
-        {!isLoading && filtered?.length === 0 && (
-          <div className="text-center py-40 glass-elevated rounded-[3rem] border border-dashed border-border/50">
-             <div className="w-24 h-24 rounded-3xl bg-bg-primary flex items-center justify-center mx-auto mb-8 text-6xl">🔍</div>
-             <h3 className="text-3xl font-black text-white mb-2 italic uppercase tracking-tighter">No blueprints found</h3>
-             <p className="text-text-secondary font-medium">Try adjusting your filters or search keywords.</p>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );
