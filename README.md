@@ -16,7 +16,7 @@ A premium subscription-based web app helping Gen-Z users make money online using
 
 ### Monetization
 - Free tier with limited access
-- Starter ($19/mo) - Weekly guides + prompt access
+- Starter ($29/mo) - Weekly guides + prompt access
 - Pro ($49/mo) - Full vault + monthly calls
 - Elite ($149/mo) - Private mastermind + mentorship
 
